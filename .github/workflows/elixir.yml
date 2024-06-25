@@ -1,0 +1,77 @@
+name: Elixir CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 1
+      MIX_ENV: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: 1.16.3
+            otp: 26.2.5
+            lint: lint
+          - elixir: 1.15.6
+            otp: 26.2.5
+          - elixir: 1.14.5
+            otp: 24.3.4.17
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - name: Restore deps, _build and plts cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+            priv/plts
+          key: ${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.elixir }}-${{ matrix.otp }}-
+
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Compile deps
+        run: mix deps.compile
+
+      - name: Check format
+        run: mix format --check-formatted
+        if: ${{ matrix.lint }}
+
+      - name: Check unused dependencies
+        run: mix deps.unlock --check-unused
+        if: ${{ matrix.lint }}
+
+      - name: Compile lint
+        run: mix compile --warning-as-errors
+        if: ${{ matrix.lint }}
+
+      - name: Credo
+        run: mix credo --strict
+        if: ${{ matrix.lint }}
+
+      - name: Dialyzer
+        run: mix dialyzer --format github
+        if: ${{ matrix.lint }}
+
+      - name: Run tests
+        run: mix test
