@@ -6,8 +6,16 @@ defmodule TypedStructor.MixProject do
       app: :typed_structor,
       version: "0.1.0",
       elixir: "~> 1.14",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      name: "TypedStructor",
+      source: "https://github.com/elixir-typed-structor/typed_structor",
+      homepage_url: "https://github.com/elixir-typed-structor/typed_structor",
+      docs: [
+        main: "TypedStructor",
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -19,8 +27,13 @@ defmodule TypedStructor.MixProject do
 
   defp deps do
     [
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ecto, "~> 3.0", only: [:dev, :test], optional: true}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
