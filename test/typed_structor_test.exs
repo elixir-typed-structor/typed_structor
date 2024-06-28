@@ -256,14 +256,27 @@ defmodule TypedStructorTest do
 
   describe "default option on the field" do
     test "generates struct with default values" do
-      deftmpmodule do
-        use TypedStructor
+      expected_bytecode =
+        test_module do
+          @type t() :: %TestModule{
+                  name: String.t(),
+                  age: integer() | nil
+                }
 
-        typed_structor do
-          field :name, String.t(), default: "Phil"
-          field :age, integer()
+          defstruct [:age, :name]
         end
-      end
+
+      expected_types = types(expected_bytecode)
+
+      bytecode =
+        deftmpmodule do
+          use TypedStructor
+
+          typed_structor do
+            field :name, String.t(), default: "Phil"
+            field :age, integer()
+          end
+        end
 
       assert match?(
                %{
@@ -273,6 +286,8 @@ defmodule TypedStructorTest do
                },
                struct(TestModule)
              )
+
+      assert expected_types === types(bytecode)
     end
   end
 

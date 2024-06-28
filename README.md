@@ -63,30 +63,13 @@ defmodule User do
 
   @type t() :: %__MODULE__{
     id: pos_integer() | nil,
-    # Note: The 'name' can be nil, even though it has a default value.
-    name: String.t() | nil,
+    # Note: The 'name' can not be nil, for it has a default value.
+    name: String.t(),
     age: non_neg_integer()
   }
 end
 ```
 Check `TypedStructor.typed_structor/2` and `TypedStructor.field/3` for more information.
-
-> #### `:enforce` and `:default` option  {: .warning}
-> Note that the `default` option does not affect the `enforce` option.
-> If you want to enforce a field, you should explicitly set the `enforce` option to `true`.
->
-> Consider the following example, `nil` is a valid value for the `:foo` field.
->
-> ```elixir
-> defmodule Settings do
->   @enforce_keys [:foo]
->   defstruct [foo: :bar]
-> end
-> 
-> %Settings{} # => ** (ArgumentError) the following keys must also be given when building struct Settings: [:foo]
-> # `nil` is a valid value for the `:foo` field
-> %Settings{foo: nil} # => %Settings{foo: nil}
-> ```
 
 ### Options
 
@@ -171,7 +154,7 @@ defmodule User do
   typed_structor define_struct: false do
     field :id, pos_integer()
     field :name, String.t()
-    field :age, non_neg_integer(), default: 0 # default value is useless in this case
+    field :age, non_neg_integer(), default: 0
   end
 
   schema "users" do
