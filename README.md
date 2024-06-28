@@ -16,7 +16,7 @@ Add `:typed_structor` to the list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:typed_structor, "~> 0.1.0"}
+    {:typed_structor, "~> 0.1.1"}
   ]
 end
 ```
