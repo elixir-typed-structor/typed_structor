@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 (2024-06-29)
+
+### Bug Fixes
+- avoid enforcing the field when default is unset and enforce is false
+
 ## 0.1.1 (2024-06-28)
 
 ### Bug Fixes
