@@ -156,11 +156,15 @@ defmodule TypedStructorTest do
             field :name, String.t()
             field :age, integer(), enforce: false
           end
+
+          def enforce_keys, do: @enforce_keys
         end
 
       assert_raise_on_enforce_error(TestModule, [:name], fn ->
         Code.eval_quoted(quote do: %TestModule{})
       end)
+
+      assert [:name] === TestModule.enforce_keys()
 
       assert expected_types === types(bytecode)
     end
@@ -276,6 +280,8 @@ defmodule TypedStructorTest do
             field :name, String.t(), default: "Phil"
             field :age, integer()
           end
+
+          def enforce_keys, do: @enforce_keys
         end
 
       assert match?(
@@ -286,6 +292,8 @@ defmodule TypedStructorTest do
                },
                struct(TestModule)
              )
+
+      assert [] === TestModule.enforce_keys()
 
       assert expected_types === types(bytecode)
     end

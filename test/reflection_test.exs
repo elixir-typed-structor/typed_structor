@@ -28,7 +28,7 @@ defmodule ReflectionTest do
     assert [:age] === Struct.__typed_structor__(:parameters)
     assert [] === MyModule.Struct.__typed_structor__(:parameters)
 
-    assert [:name, :age] === Struct.__typed_structor__(:enforced_fields)
+    assert [:name] === Struct.__typed_structor__(:enforced_fields)
     assert [:name, :age] === MyModule.Struct.__typed_structor__(:enforced_fields)
 
     assert "String.t()" === Macro.to_string(Struct.__typed_structor__(:type, :name))
