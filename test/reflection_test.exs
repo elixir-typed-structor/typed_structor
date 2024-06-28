@@ -8,7 +8,7 @@ defmodule ReflectionTest do
       parameter :age
 
       field :name, String.t(), enforce: true
-      field :age, age
+      field :age, age, default: 20
     end
   end
 
@@ -28,7 +28,7 @@ defmodule ReflectionTest do
     assert [:age] === Struct.__typed_structor__(:parameters)
     assert [] === MyModule.Struct.__typed_structor__(:parameters)
 
-    assert [:name] === Struct.__typed_structor__(:enforced_fields)
+    assert [:name, :age] === Struct.__typed_structor__(:enforced_fields)
     assert [:name, :age] === MyModule.Struct.__typed_structor__(:enforced_fields)
 
     assert "String.t()" === Macro.to_string(Struct.__typed_structor__(:type, :name))
@@ -47,7 +47,7 @@ defmodule ReflectionTest do
 
     assert [enforce: true, name: :name, type: type] = Struct.__typed_structor__(:field, :name)
     assert "String.t()" === Macro.to_string(type)
-    assert [name: :age, type: type] = Struct.__typed_structor__(:field, :age)
+    assert [default: 20, name: :age, type: type] = Struct.__typed_structor__(:field, :age)
     assert "age" === Macro.to_string(type)
   end
 end

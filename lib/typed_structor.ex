@@ -221,7 +221,7 @@ defmodule TypedStructor do
             name = Keyword.fetch!(field, :name)
             default = Keyword.get(field, :default)
 
-            if Keyword.get(field, :enforce, false) do
+            if TypedStructor.__is_enforced__?(field) do
               {{name, default}, [name | acc]}
             else
               {{name, default}, acc}
@@ -251,7 +251,7 @@ defmodule TypedStructor do
           name = Keyword.fetch!(field, :name)
           type = Keyword.fetch!(field, :type)
 
-          if Keyword.get(field, :enforce, false) do
+          if TypedStructor.__is_enforced__?(field) do
             [{name, type} | acc]
           else
             [{name, quote(do: unquote(type) | nil)} | acc]
@@ -288,7 +288,7 @@ defmodule TypedStructor do
 
       enforced_fields =
         @__ts_definition__.fields
-        |> Stream.filter(&Keyword.get(&1, :enforce, false))
+        |> Stream.filter(&TypedStructor.__is_enforced__?/1)
         |> Stream.map(&Keyword.fetch!(&1, :name))
         |> Enum.to_list()
 
@@ -346,5 +346,9 @@ defmodule TypedStructor do
         end
       )
     end
+  end
+
+  def __is_enforced__?(field) do
+    Keyword.get(field, :enforce, false) or Keyword.has_key?(field, :default)
   end
 end
