@@ -98,9 +98,7 @@ defmodule TypedStructorTest do
           end
         end
 
-      assert_raise_on_enforce_error(TestModule, [:name], fn ->
-        Code.eval_quoted(quote do: %TestModule{})
-      end)
+      assert_raise_on_enforce_error(TestModule, [:name], quote(do: %TestModule{}))
 
       assert expected_types === types(bytecode)
     end
@@ -128,9 +126,11 @@ defmodule TypedStructorTest do
           end
         end
 
-      assert_raise_on_enforce_error(TestModule, [:name, :age], fn ->
-        Code.eval_quoted(quote do: %TestModule{})
-      end)
+      assert_raise_on_enforce_error(
+        TestModule,
+        [:name, :age],
+        quote(do: %TestModule{})
+      )
 
       assert expected_types === types(bytecode)
     end
@@ -160,9 +160,11 @@ defmodule TypedStructorTest do
           def enforce_keys, do: @enforce_keys
         end
 
-      assert_raise_on_enforce_error(TestModule, [:name], fn ->
-        Code.eval_quoted(quote do: %TestModule{})
-      end)
+      assert_raise_on_enforce_error(
+        TestModule,
+        [:name],
+        quote(do: %TestModule{})
+      )
 
       assert [:name] === TestModule.enforce_keys()
 
@@ -435,11 +437,11 @@ defmodule TypedStructorTest do
     end
   end
 
-  defp assert_raise_on_enforce_error(module, keys, fun) do
+  defp assert_raise_on_enforce_error(module, keys, quoted) do
     assert_raise ArgumentError,
                  "the following keys must also be given when building struct #{inspect(module)}: #{inspect(keys)}",
                  fn ->
-                   fun.()
+                   Code.eval_quoted(quoted)
                  end
   end
 end

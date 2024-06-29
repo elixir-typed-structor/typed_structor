@@ -18,9 +18,9 @@ defmodule TypedStructor do
 
   ## Options
 
-    * `:module` - if provided, the struct will be defined in the given module.
-    * `:enforce` - if `true`, the struct will enforce the keys.
-    * `:define_struct` - if `false`, the struct will not be defined. Defaults to `true`.
+    * `:module` - if provided, a new submodule will be created with the struct.
+    * `:enforce` - if `true`, the struct will enforce the keys, see `field/3` options for more information.
+    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
     * `:type_kind` - the kind of type to use for the struct. Defaults to `type`, can be `opaque` or `typep`.
     * `:type_name` - the name of the type to use for the struct. Defaults to `t`.
 
@@ -134,7 +134,8 @@ defmodule TypedStructor do
   end
 
   @doc """
-  Defines a field in a `typed_structor`.
+  Defines a field in a `typed_structor/2`.
+  You can override the options set by `typed_structor/2` by passing options.
 
   ## Example
 
@@ -144,8 +145,17 @@ defmodule TypedStructor do
   ## Options
 
     * `:default` - sets the default value for the field
-    * `:enforce` - if set to true, enforces the field and makes its type
-      non-nullable
+    * `:enforce` - if set to `true`, enforces the field, and makes its type
+      non-nullable if `:default` is not set
+
+  > ### How `:default` and `:enforce` affect `type` and `@enforce_keys` {: .tip}
+  >
+  > | **`:default`** | **`:enforce`** | **`type`**        | **`@enforce_keys`** |
+  > | -------------- | -------------- | ----------------- | ------------------- |
+  > | `set`          | `true`         | `t()`             | `excluded`          |
+  > | `set`          | `false`        | `t()`             | `excluded`          |
+  > | `unset`        | `true`         | `t()`             | **`included`**      |
+  > | `unset`        | `false`        | **`t() \\| nil`** | `excluded`          |
   """
   defmacro field(name, type, options \\ []) do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
@@ -158,7 +168,7 @@ defmodule TypedStructor do
   end
 
   @doc """
-  Defines a type parameter in a `typed_structor`.
+  Defines a type parameter in a `typed_structor/2`.
 
   ## Example
 
@@ -221,7 +231,7 @@ defmodule TypedStructor do
             name = Keyword.fetch!(field, :name)
             default = Keyword.get(field, :default)
 
-            if Keyword.get(field, :enforce, false) do
+            if Keyword.get(field, :enforce, false) and not Keyword.has_key?(field, :default) do
               {{name, default}, [name | acc]}
             else
               {{name, default}, acc}
