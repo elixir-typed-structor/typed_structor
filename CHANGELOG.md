@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/elixir-typed-structor/typed_structor/compare/v0.1.2...v0.1.3) (2024-06-29)
+
+
+### Bug Fixes
+
+* exclude key from `[@enforce](https://github.com/enforce)_keys`, if `:default` is set and `:enforce` is true ([7af12ae](https://github.com/elixir-typed-structor/typed_structor/commit/7af12aef0c9506dab5f139195af5e560e5d5ec8b))
+
 ## 0.1.3 (2024-06-29)
 
 ### Features
