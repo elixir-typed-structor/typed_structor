@@ -1,6 +1,8 @@
 defmodule TypedStructor.MixProject do
   use Mix.Project
 
+  @source_url "https://github.com/elixir-typed-structor/typed_structor"
+
   def project do
     [
       app: :typed_structor,
@@ -11,10 +13,11 @@ defmodule TypedStructor.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       name: "TypedStructor",
-      source: "https://github.com/elixir-typed-structor/typed_structor",
-      homepage_url: "https://github.com/elixir-typed-structor/typed_structor",
+      source: @source_url,
+      homepage_url: @source_url,
       docs: [
         main: "TypedStructor",
+        source_url: @source_url,
         extra_section: "Guides",
         extras: [
           "README.md",
@@ -26,7 +29,7 @@ defmodule TypedStructor.MixProject do
         name: "typed_structor",
         licenses: ["MIT"],
         links: %{
-          "GitHub" => "https://github.com/elixir-typed-structor/typed_structor"
+          "GitHub" => @source_url
         }
       ]
     ]
