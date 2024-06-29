@@ -180,7 +180,7 @@ end
 You can also document submodules this way:
 
 ```elixir
-typedstruct module: Profile do
+typedstructor module: Profile do
   @moduledoc "A user profile struct"
   @typedoc "A typed user profile"
 
