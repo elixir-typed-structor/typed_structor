@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3 (2024-06-29)
+
+### Features
+- doc: add `Migrate from `typed_struct` guide
+
+### Bug Fixes
+- fix: exclude key from `@enforce_keys`, if `:default` is set and `:enforce` is true
+
 ## 0.1.2 (2024-06-29)
 
 ### Bug Fixes
