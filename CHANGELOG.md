@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 (2024-06-29)
+
+This release is a documentation update and
+does not contain any new features or bug fixes.
+
 ## 0.1.4 (2024-06-29)
 
 This release is a documentation update and
