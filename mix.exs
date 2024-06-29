@@ -15,7 +15,12 @@ defmodule TypedStructor.MixProject do
       homepage_url: "https://github.com/elixir-typed-structor/typed_structor",
       docs: [
         main: "TypedStructor",
-        extras: ["README.md"]
+        extra_section: "Guides",
+        extras: [
+          "README.md",
+          "guides/migrate_from_typed_struct.md",
+          "CHANGELOG.md"
+        ]
       ],
       package: [
         name: "typed_structor",
@@ -38,7 +43,8 @@ defmodule TypedStructor.MixProject do
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:ecto, "~> 3.0", only: [:dev, :test], optional: true}
+      {:ecto, "~> 3.0", only: [:dev, :test], optional: true},
+      {:makeup_diff, "~> 0.1", only: [:test, :dev], runtime: false}
     ]
   end
 

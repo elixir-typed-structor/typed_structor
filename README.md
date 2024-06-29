@@ -4,10 +4,10 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/typed_structor.svg)](https://hex.pm/packages/typed_structor)
 [![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/typed_structor/)
 
+<!-- MODULEDOC -->
+
 `TypedStructor` is a library for defining structs with types effortlessly.
 (This library is a rewritten version of [TypedStruct](https://github.com/ejpcmac/typed_struct) because it is no longer actively maintained.)
-
-<!-- MODULEDOC -->
 
 ## Installation
 
@@ -16,7 +16,7 @@ Add `:typed_structor` to the list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:typed_structor, "~> 0.1.2"}
+    {:typed_structor, "~> 0.1"}
   ]
 end
 ```
