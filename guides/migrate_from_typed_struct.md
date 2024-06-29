@@ -6,17 +6,31 @@ It is a drop-in replacement for `typed_struct`.
 ## Migration
 
 1. Replace `typed_struct` with `typed_structor` in your `mix.exs` file.
+
 ```diff
--  {:typed_struct, "~> 0.3"}
-+  {:typed_structor, "~> 0.1"}
+   defp deps do
+     [
+       # ...deps
+-      {:typed_struct, "~> 0.3.0"},
++      {:typed_structor, "~> 0.1"},
+     ]
+   end
 ```
+
 2. Run `mix do deps.unlock --unused, deps.get, deps.clean --unused` to fetch the new dependency.
 3. Replace `TypedStruct` with `TypedStructor` in your code.
+
 ```diff
+ defmodule User do
 -  use TypedStruct
 +  use TypedStructor
-
--  typed_struct do
+ 
+-  typedstruct do
 +  typed_structor do
+     field :id, pos_integer()
+     field :name, String.t()
+     field :age, non_neg_integer()
+   end
+ end
 ```
 4. That's it!
