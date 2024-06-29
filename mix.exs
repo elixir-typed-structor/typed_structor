@@ -26,7 +26,7 @@ defmodule TypedStructor.MixProject do
         name: "typed_structor",
         licenses: ["MIT"],
         links: %{
-          "GitHub" => "https://github.com/Byzanteam/jet-ext"
+          "GitHub" => "https://github.com/elixir-typed-structor/typed_structor"
         }
       ]
     ]
