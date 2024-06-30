@@ -54,3 +54,5 @@ defmodule MyApp.User do
   end
 end
 ```
+
+If you want to apply this plugin conditionally, refer to the [Registering plugins globally](./registering_plugins_globally.md) section.
