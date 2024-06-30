@@ -31,7 +31,8 @@ defmodule TypedStructor.MixProject do
           "guides/migrate_from_typed_struct.md",
 
           # plugins
-          "guides/plugins/type_only_on_ecto_schema.md"
+          "guides/plugins/type_only_on_ecto_schema.md",
+          "guides/plugins/primary_key_and_timestamps.md"
         ]
       ],
       package: [
