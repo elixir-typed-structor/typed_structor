@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.1.5...v0.2.0) (2024-06-30)
+
+
+### Features
+
+* register plugins globally by configuration ([4767e62](https://github.com/elixir-typed-structor/typed_structor/commit/4767e620c237777f535cfe763c773d13a4944c0f))
+
 ## 0.1.5 (2024-06-29)
 
 This release is a documentation update and
