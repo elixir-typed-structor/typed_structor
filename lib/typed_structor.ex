@@ -62,6 +62,13 @@ defmodule TypedStructor do
       end
   """
   defmacro typed_structor(options \\ [], do: block) when is_list(options) do
+    register_plugins =
+      for {plugin, opts} <- get_global_plugins() do
+        quote do
+          TypedStructor.plugin(unquote(plugin), unquote(opts))
+        end
+      end
+
     definition =
       quote do
         {module, options} = Keyword.pop(unquote(options), :module, __MODULE__)
@@ -76,6 +83,9 @@ defmodule TypedStructor do
         # create a lexical scope
         try do
           import TypedStructor, only: [field: 2, field: 3, parameter: 1, plugin: 1, plugin: 2]
+
+          unquote(register_plugins)
+
           unquote(block)
 
           fields = Enum.reverse(@__ts_struct_fields_acc__)
@@ -131,6 +141,33 @@ defmodule TypedStructor do
       :error ->
         ast
     end
+  end
+
+  # get the global plugins from config
+  defp get_global_plugins do
+    :typed_structor
+    |> Application.get_env(:plugins, [])
+    |> Enum.map(fn
+      {plugin, opts} when is_atom(plugin) and is_list(opts) ->
+        {plugin, opts}
+
+      plugin when is_atom(plugin) ->
+        {plugin, []}
+
+      other ->
+        raise ArgumentError,
+              """
+              Expected a plugin module or a tuple with a plugin module and its keyword options,
+              Got: #{inspect(other)}
+
+              Example:
+
+                  config :typed_structor, plugins: [
+                    {MyPlugin, [option: :value]},
+                    MyAnotherPlugin
+                  ]
+              """
+    end)
   end
 
   @doc """
@@ -202,7 +239,7 @@ defmodule TypedStructor do
   `TypedStructor.Plugin`. To use a third-party plugin, please refer directly to
   its documentation.
   """
-  defmacro plugin(plugin, opts \\ []) do
+  defmacro plugin(plugin, opts \\ []) when is_list(opts) do
     quote do
       require unquote(plugin)
 
