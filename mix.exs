@@ -22,6 +22,7 @@ defmodule TypedStructor.MixProject do
         extras: [
           "README.md",
           "guides/migrate_from_typed_struct.md",
+          "guides/plugins/type_only_on_ecto_schema.md",
           "CHANGELOG.md"
         ]
       ],
