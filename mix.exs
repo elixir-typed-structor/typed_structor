@@ -19,11 +19,19 @@ defmodule TypedStructor.MixProject do
         main: "TypedStructor",
         source_url: @source_url,
         extra_section: "Guides",
+        groups_for_extras: [
+          Guides: ~r<(guides/[^\/]+\.md)|(README.md)>,
+          Plugins: ~r{guides/plugins/[^\/]+\.md}
+        ],
         extras: [
-          "README.md",
+          {"CHANGELOG.md", [title: "Changelog"]},
+
+          # guides
+          {"README.md", [title: "Introduction"]},
           "guides/migrate_from_typed_struct.md",
-          "guides/plugins/type_only_on_ecto_schema.md",
-          "CHANGELOG.md"
+
+          # plugins
+          "guides/plugins/type_only_on_ecto_schema.md"
         ]
       ],
       package: [
