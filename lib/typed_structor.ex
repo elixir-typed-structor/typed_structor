@@ -69,7 +69,7 @@ defmodule TypedStructor do
         end
       end
 
-    definition =
+    ast =
       quote do
         {module, options} = Keyword.pop(unquote(options), :module, __MODULE__)
 
@@ -87,7 +87,12 @@ defmodule TypedStructor do
           unquote(register_plugins)
 
           unquote(block)
+        after
+          :ok
+        end
 
+        # create a lexical scope
+        try do
           fields = Enum.reverse(@__ts_struct_fields_acc__)
           parameters = Enum.reverse(@__ts_struct_parameters_acc__)
 
@@ -106,18 +111,13 @@ defmodule TypedStructor do
 
           @__ts_definition__ definition
           @__ts_current_module__ {module, definition.options}
-
-          TypedStructor.__struct_ast__()
-          TypedStructor.__type_ast__()
-          TypedStructor.__reflection_ast__()
         after
           :ok
         end
-      end
 
-    ast =
-      quote do
-        unquote(definition)
+        TypedStructor.__struct_ast__()
+        TypedStructor.__type_ast__()
+        TypedStructor.__reflection_ast__()
 
         # create a lexical scope
         try do
