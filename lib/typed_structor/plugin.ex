@@ -54,7 +54,8 @@ defmodule TypedStructor.Plugin do
   @type t() :: %MyApp.User{
           __meta__: Ecto.Schema.Metadata.t(),
           age: integer() | nil,
-          id: integer(),                                                                                                                                                                       name: String.t(),
+          id: integer(),
+          name: String.t(),
           password: String.t() | nil,
           posts: [MyApp.Post.t()] | nil
         }
@@ -82,7 +83,8 @@ defmodule TypedStructor.Plugin do
     related_key: :user_id,
     on_cast: nil,
     queryable: MyApp.Post,
-    on_delete: :nothing,                                                                                                                                                                 on_replace: :raise,
+    on_delete: :nothing,
+    on_replace: :raise,
     where: [],
     unique: true,
     defaults: [],
