@@ -62,89 +62,79 @@ defmodule TypedStructor do
       end
   """
   defmacro typed_structor(options \\ [], do: block) when is_list(options) do
-    register_plugins =
-      for {plugin, opts} <- get_global_plugins() do
-        quote do
-          TypedStructor.plugin(unquote(plugin), unquote(opts))
-        end
-      end
+    case Keyword.pop(options, :module) do
+      {nil, options} ->
+        __typed_structor__(__CALLER__.module, options, block)
 
-    ast =
-      quote do
-        {module, options} = Keyword.pop(unquote(options), :module, __MODULE__)
-
-        Module.register_attribute(__MODULE__, :__ts_current_module__, accumulate: false)
-        Module.register_attribute(__MODULE__, :__ts_struct_fields_acc__, accumulate: true)
-        Module.register_attribute(__MODULE__, :__ts_struct_parameters_acc__, accumulate: true)
-        Module.register_attribute(__MODULE__, :__ts_struct_plugins_acc__, accumulate: true)
-
-        @__ts_current_module__ {module, options}
-
-        # create a lexical scope
-        try do
-          import TypedStructor, only: [field: 2, field: 3, parameter: 1, plugin: 1, plugin: 2]
-
-          unquote(register_plugins)
-
-          unquote(block)
-        after
-          :ok
-        end
-
-        # create a lexical scope
-        try do
-          fields = Enum.reverse(@__ts_struct_fields_acc__)
-          parameters = Enum.reverse(@__ts_struct_parameters_acc__)
-
-          Module.delete_attribute(__MODULE__, :__ts_struct_fields_acc__)
-          Module.delete_attribute(__MODULE__, :__ts_struct_parameters_acc__)
-
-          @__ts_struct_plugins__ Enum.reverse(@__ts_struct_plugins_acc__)
-          Module.delete_attribute(__MODULE__, :__ts_struct_plugins_acc__)
-
-          definition =
-            TypedStructor.__call_plugins_before_definitions__(%TypedStructor.Definition{
-              options: options,
-              fields: fields,
-              parameters: parameters
-            })
-
-          @__ts_definition__ definition
-          @__ts_current_module__ {module, definition.options}
-        after
-          :ok
-        end
-
-        TypedStructor.__struct_ast__()
-        TypedStructor.__type_ast__()
-        TypedStructor.__reflection_ast__()
-
-        # create a lexical scope
-        try do
-          TypedStructor.__call_plugins_after_definitions__()
-        after
-          # cleanup
-          Module.delete_attribute(__MODULE__, :__ts_struct_plugins__)
-          Module.delete_attribute(__MODULE__, :__ts_definition__)
-          Module.delete_attribute(__MODULE__, :__ts_current_module__)
-        end
-      end
-
-    case Keyword.fetch(options, :module) do
-      {:ok, module} ->
+      {module, options} ->
         quote do
           defmodule unquote(module) do
-            unquote(ast)
+            use TypedStructor
+
+            typed_structor unquote(options) do
+              unquote(block)
+            end
           end
         end
-
-      :error ->
-        ast
     end
   end
 
-  # get the global plugins from config
-  defp get_global_plugins do
+  defp __typed_structor__(mod, options, block) do
+    Module.register_attribute(mod, :__ts_options__, accumulate: false)
+    Module.register_attribute(mod, :__ts_struct_fields__, accumulate: true)
+    Module.register_attribute(mod, :__ts_struct_parameters__, accumulate: true)
+    Module.register_attribute(mod, :__ts_struct_plugins__, accumulate: true)
+    Module.register_attribute(mod, :__ts_definition____, accumulate: false)
+
+    quote do
+      @__ts_options__ unquote(options)
+
+      # create a lexical scope
+      try do
+        import TypedStructor, only: [field: 2, field: 3, parameter: 1, plugin: 1, plugin: 2]
+
+        unquote(register_global_plugins())
+
+        unquote(block)
+      after
+        :ok
+      end
+
+      # create a lexical scope
+      try do
+        definition =
+          TypedStructor.__call_plugins_before_definitions__(%TypedStructor.Definition{
+            options: @__ts_options__,
+            fields: Enum.reverse(@__ts_struct_fields__),
+            parameters: Enum.reverse(@__ts_struct_parameters__)
+          })
+
+        @__ts_definition__ definition
+        @__ts_options__ definition.options
+      after
+        :ok
+      end
+
+      TypedStructor.__struct_ast__()
+      TypedStructor.__type_ast__()
+      TypedStructor.__reflection_ast__()
+
+      # create a lexical scope
+      try do
+        TypedStructor.__call_plugins_after_definitions__()
+      after
+        # cleanup
+        Module.delete_attribute(__MODULE__, :__ts_options__)
+        Module.delete_attribute(__MODULE__, :__ts_struct_fields__)
+        Module.delete_attribute(__MODULE__, :__ts_struct_parameters__)
+        Module.delete_attribute(__MODULE__, :__ts_struct_plugins__)
+        Module.delete_attribute(__MODULE__, :__ts_definition__)
+      end
+    end
+  end
+
+  # register global plugins
+  defp register_global_plugins do
     :typed_structor
     |> Application.get_env(:plugins, [])
     |> Enum.map(fn
@@ -167,6 +157,11 @@ defmodule TypedStructor do
                     MyAnotherPlugin
                   ]
               """
+    end)
+    |> Enum.map(fn {plugin, opts} ->
+      quote do
+        plugin unquote(plugin), unquote(opts)
+      end
     end)
   end
 
@@ -198,9 +193,7 @@ defmodule TypedStructor do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
 
     quote do
-      {_module, options} = @__ts_current_module__
-
-      @__ts_struct_fields_acc__ Keyword.merge(options, unquote(options))
+      @__ts_struct_fields__ Keyword.merge(@__ts_options__, unquote(options))
     end
   end
 
@@ -216,7 +209,7 @@ defmodule TypedStructor do
   """
   defmacro parameter(name) when is_atom(name) do
     quote do
-      @__ts_struct_parameters_acc__ unquote(name)
+      @__ts_struct_parameters__ unquote(name)
     end
   end
 
@@ -240,22 +233,12 @@ defmodule TypedStructor do
   its documentation.
   """
   defmacro plugin(plugin, opts \\ []) when is_list(opts) do
+    Module.put_attribute(__CALLER__.module, :__ts_struct_plugins__, {plugin, opts})
+
     quote do
       require unquote(plugin)
 
       unquote(plugin).init(unquote(opts))
-
-      @__ts_struct_plugins_acc__ {
-        unquote(plugin),
-        unquote(opts),
-        {
-          # workaround to resolve these issues:
-          # 1. warning: variable '&1' is unused (this might happen when using a capture argument as a pattern)
-          # 2. error: invalid argument for require, expected a compile time atom or alias, got: plugin
-          fn definition, opts -> unquote(plugin).before_definition(definition, opts) end,
-          fn definition, opts -> unquote(plugin).after_definition(definition, opts) end
-        }
-      }
     end
   end
 
@@ -280,9 +263,7 @@ defmodule TypedStructor do
       end
 
     quote do
-      {_module, options} = @__ts_current_module__
-
-      if Keyword.get(options, :define_struct, true) do
+      if Keyword.get(@__ts_options__, :define_struct, true) do
         unquote(ast)
       end
     end
@@ -291,8 +272,6 @@ defmodule TypedStructor do
   @doc false
   defmacro __type_ast__ do
     quote unquote: false do
-      {module, options} = @__ts_current_module__
-
       fields =
         Enum.reduce(@__ts_definition__.fields, [], fn field, acc ->
           name = Keyword.fetch!(field, :name)
@@ -305,23 +284,23 @@ defmodule TypedStructor do
           end
         end)
 
-      type_name = Keyword.get(options, :type_name, :t)
+      type_name = Keyword.get(@__ts_options__, :type_name, :t)
 
       parameters = Enum.map(@__ts_definition__.parameters, &Macro.var(&1, __MODULE__))
 
-      case Keyword.get(options, :type_kind, :type) do
+      case Keyword.get(@__ts_options__, :type_kind, :type) do
         :type ->
-          @type unquote(type_name)(unquote_splicing(parameters)) :: %unquote(module){
+          @type unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
                   unquote_splicing(fields)
                 }
 
         :opaque ->
-          @opaque unquote(type_name)(unquote_splicing(parameters)) :: %unquote(module){
+          @opaque unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
                     unquote_splicing(fields)
                   }
 
         :typep ->
-          @typep unquote(type_name)(unquote_splicing(parameters)) :: %unquote(module){
+          @typep unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
                    unquote_splicing(fields)
                  }
       end
@@ -353,45 +332,51 @@ defmodule TypedStructor do
     end
   end
 
+  @doc false
   defmacro __call_plugins_before_definitions__(definition) do
     alias TypedStructor.Definition
 
-    quote do
-      Enum.reduce(
-        @__ts_struct_plugins__,
-        unquote(definition),
-        fn {plugin, opts, {before_definition, _after_definition}}, acc ->
-          result = before_definition.(acc, opts)
+    plugins = Module.get_attribute(__CALLER__.module, :__ts_struct_plugins__)
 
-          result
-          |> List.wrap()
-          |> Enum.filter(&is_struct(&1, Definition))
-          |> case do
-            [definition] ->
-              definition
+    Enum.reduce(plugins, definition, fn {plugin, opts}, acc ->
+      quote do
+        require unquote(plugin)
 
-            _otherwise ->
-              raise """
-              The plugin call to `#{inspect(plugin)}` did not return a `#{inspect(Definition)}` struct,
-              got: #{inspect(result)}
+        result = unquote(plugin).before_definition(unquote(acc), unquote(opts))
 
-              The plugin call should return a `#{inspect(Definition)}` struct,
-              or a list which contains exactly one `#{inspect(Definition)}` struct.
-              """
-          end
+        result
+        |> List.wrap()
+        |> Enum.filter(&is_struct(&1, Definition))
+        |> case do
+          [definition] ->
+            definition
+
+          _otherwise ->
+            raise """
+            The plugin call to `#{inspect(unquote(plugin))}` did not return a `#{inspect(Definition)}` struct,
+            got: #{inspect(result)}
+
+            The plugin call should return a `#{inspect(Definition)}` struct,
+            or a list which contains exactly one `#{inspect(Definition)}` struct.
+            """
         end
-      )
-    end
+      end
+    end)
   end
 
+  @doc false
   defmacro __call_plugins_after_definitions__ do
-    quote do
-      Enum.each(
-        Enum.reverse(@__ts_struct_plugins__),
-        fn {plugin, opts, {_before_definition, after_definition}} ->
-          after_definition.(@__ts_definition__, opts)
-        end
-      )
+    plugins = Module.get_attribute(__CALLER__.module, :__ts_struct_plugins__)
+
+    for {plugin, opts} <- plugins do
+      quote do
+        require unquote(plugin)
+
+        unquote(plugin).after_definition(
+          @__ts_definition__,
+          unquote(Macro.escape(opts))
+        )
+      end
     end
   end
 end

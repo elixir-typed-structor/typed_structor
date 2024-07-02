@@ -197,15 +197,15 @@ defmodule TypedStructor.Plugin do
               {:has_many, module} ->
                 module = Macro.expand(module, __ENV__)
 
-                Ecto.Schema.has_many(name, module, options)
+                has_many name, module, options
 
               {:belongs_to, module} ->
                 module = Macro.expand(module, __ENV__)
 
-                Ecto.Schema.belongs_to(name, module, options)
+                belongs_to name, module, options
 
               _ ->
-                Ecto.Schema.field(name, ecto_type, options)
+                field name, ecto_type, options
             end
           end
         end
