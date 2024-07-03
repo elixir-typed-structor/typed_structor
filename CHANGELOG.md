@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.2.0...v1.0.0) (2024-07-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove accessible plugin, add it to guides
+
+### Bug Fixes
+
+* macro capture will capture import context ([9c6f340](https://github.com/elixir-typed-structor/typed_structor/commit/9c6f3406009565b1e7ccab77d7ce24a7ee3984e6))
+
+
+### Code Refactoring
+
+* remove accessible plugin, add it to guides ([204cb0a](https://github.com/elixir-typed-structor/typed_structor/commit/204cb0aeab5a7ca8d5a15d7e016243d66af6e595))
+
 ## [0.3.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.2.0...v0.3.0) (2024-07-03)
 
 
