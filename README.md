@@ -195,13 +195,13 @@ end
 `TypedStructor` offers a plugin system to enhance functionality.
 For details on creating a plugin, refer to the `TypedStructor.Plugin` module.
 
-Here is a example of `TypedStructor.Plugins.Accessible` plugin to define `Access` behavior for the struct.
+Here is a example of `Guides.Plugins.Accessible` plugin to define `Access` behavior for the struct.
 ```elixir
 defmodule User do
   use TypedStructor
 
   typed_structor do
-    plugin TypedStructor.Plugins.Accessible
+    plugin Guides.Plugins.Accessible
 
     field :id, pos_integer()
     field :name, String.t()
@@ -212,3 +212,9 @@ end
 user = %User{id: 1, name: "Phil", age: 20}
 get_in(user, [:name]) # => "Phil"
 ```
+
+> #### Plugins guides {: .tip}
+>
+> Here are some [Plugin Guides](guides/plugins/introduction.md)
+> for creating your own plugins. Please check them out
+> and feel free to copy-paste the code.
