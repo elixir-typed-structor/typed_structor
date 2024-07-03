@@ -12,7 +12,7 @@ We provide some example plugins that you can use as a reference, or copy-paste.
 
 **Plugin examples:**
 - [Registering plugins globally](./registering_plugins_globally.md)
-- `TypedStructor.Plugins.Accessible`
+- [Implement `Access` behavior](./accessible.md)
 - [Type Only on Ecto Schema](./type_only_on_ecto_schema.md)
 - [Add primary key and timestamps types to your Ecto schema](./primary_key_and_timestamps.md)
 - [Derives the `Jason.Encoder` for `struct`](./derive_jason.md)
