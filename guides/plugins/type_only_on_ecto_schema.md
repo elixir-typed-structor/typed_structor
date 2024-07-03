@@ -13,7 +13,7 @@ set to `false` to prevent struct creation.
 
 Here is the plugin(*feel free to copy and paste*):
 ```elixir
-defmodule MyApp.TypedStructor.Plugins.TypeOnlyOnEctoSchema do
+defmodule Guides.Plugins.TypeOnlyOnEctoSchema do
   use TypedStructor.Plugin
 
   @impl TypedStructor.Plugin
@@ -40,7 +40,7 @@ defmodule MyApp.User do
   use Ecto.Schema
 
   typed_structor do
-    plugin MyApp.TypedStructor.Plugins.TypeOnlyOnEctoSchema
+    plugin Guides.Plugins.TypeOnlyOnEctoSchema
 
     field :id, integer(), enforce: true
     field :name, String.t()
@@ -56,7 +56,7 @@ end
 
 ## Registering the plugin globally
 ```elixir
-config :typed_structor, plugins: [MyApp.TypedStructor.Plugins.TypeOnlyOnEctoSchema]
+config :typed_structor, plugins: [Guides.Plugins.TypeOnlyOnEctoSchema]
 ```
 
 Note that the plugin is applied to **all modules** that use `TypedStructor`,
@@ -65,7 +65,7 @@ you can opt-out by determining the module name or other conditions.
 Let's change the plugin to only apply to modules from the `MyApp` namespace(*feel free to copy and paste*):
 
 ```elixir
-defmodule MyApp.TypedStructor.Plugins.TypeOnlyOnEctoSchema do
+defmodule Guides.Plugins.TypeOnlyOnEctoSchema do
   use TypedStructor.Plugin
 
   @impl TypedStructor.Plugin
@@ -93,7 +93,7 @@ Now you can use `typed_structor` without registering the plugin explicitly:
    use Ecto.Schema
 
    typed_structor do
--    plugin MyApp.TypedStructor.Plugins.TypeOnlyOnEctoSchema
+-    plugin Guides.Plugins.TypeOnlyOnEctoSchema
  
      field :id, integer(), enforce: true
      field :name, String.t()

@@ -11,6 +11,7 @@ defmodule TypedStructor.MixProject do
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      consolidate_protocols: Mix.env() != :test,
       deps: deps(),
       name: "TypedStructor",
       source: @source_url,
@@ -61,6 +62,7 @@ defmodule TypedStructor.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.0", only: [:dev, :test], optional: true},
+      {:jason, "~> 1.4", only: [:dev, :test], optional: true},
       {:makeup_diff, "~> 0.1", only: [:test, :dev], runtime: false}
     ]
   end

@@ -5,7 +5,7 @@ generate the `Jason.Encoder` implementation for the struct.
 
 ## Implementation
 ```elixir
-defmodule MyPlugin do
+defmodule Guides.Plugins.Jason do
   use TypedStructor.Plugin
 
   @impl TypedStructor.Plugin
@@ -29,10 +29,10 @@ end
 defmodule User do
   use TypedStructor
 
-  typed_structor do
-    plugin MyPlugin
+  typed_structor enforce: true do
+    plugin Guides.Plugins.Jason
 
-    field :name, String.t(), enforce: true
+    field :name, String.t()
   end
 end
 ```

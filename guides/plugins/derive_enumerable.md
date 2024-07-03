@@ -8,7 +8,7 @@ Let's start!
 
 ## Implementation
 ```elixir
-defmodule MyPlugin do
+defmodule Guides.Plugins.Enumerable do
   use TypedStructor.Plugin
 
   @impl TypedStructor.Plugin
@@ -40,11 +40,11 @@ end
 defmodule User do
   use TypedStructor
 
-  typed_structor do
-    plugin MyPlugin
+  typed_structor enforce: true do
+    plugin Guides.Plugins.Enumerable
 
-    field :name, String.t(), enforce: true
-    field :age, integer(), enforce: true
+    field :name, String.t()
+    field :age, Integer.t()
   end
 end
 ```

@@ -7,7 +7,7 @@ This plugin use `c:TypedStructor.Plugin.before_definition/2` callback to
 inject the primary key and timestamps fields to the type definition.
 
 ```elixir
-defmodule MyApp.TypedStructor.Plugins.PrimaryKeyAndTimestamps do
+defmodule Guides.Plugins.PrimaryKeyAndTimestamps do
   use TypedStructor.Plugin
 
   @impl TypedStructor.Plugin
@@ -33,14 +33,14 @@ end
 ## Usage
 
 ```elixir
-defmodule MyApp.User do
+defmodule User do
   use TypedStructor
   use Ecto.Schema
 
   # disable struct creation or it will conflict with the Ecto schema
   typed_structor define_struct: false do
     # register the plugin
-    plugin MyApp.TypedStructor.Plugins.PrimaryKeyAndTimestamps
+    plugin Guides.Plugins.PrimaryKeyAndTimestamps
 
     field :name, String.t()
     field :age, integer(), enforce: true # There is always a non-nil value
