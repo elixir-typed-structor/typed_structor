@@ -117,7 +117,6 @@ defmodule TypedStructor do
 
       TypedStructor.__struct_ast__()
       TypedStructor.__type_ast__()
-      TypedStructor.__reflection_ast__()
 
       # create a lexical scope
       try do
@@ -303,31 +302,6 @@ defmodule TypedStructor do
           @typep unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
                    unquote_splicing(fields)
                  }
-      end
-    end
-  end
-
-  @doc false
-  defmacro __reflection_ast__ do
-    quote unquote: false do
-      fields = Enum.map(@__ts_definition__.fields, &Keyword.fetch!(&1, :name))
-
-      enforced_fields =
-        @__ts_definition__.fields
-        |> Stream.filter(&Keyword.get(&1, :enforce, false))
-        |> Stream.map(&Keyword.fetch!(&1, :name))
-        |> Enum.to_list()
-
-      def __typed_structor__(:fields), do: unquote(fields)
-      def __typed_structor__(:parameters), do: @__ts_definition__.parameters
-      def __typed_structor__(:enforced_fields), do: unquote(enforced_fields)
-
-      for field <- @__ts_definition__.fields do
-        name = Keyword.fetch!(field, :name)
-        type = field |> Keyword.fetch!(:type) |> Macro.escape()
-
-        def __typed_structor__(:type, unquote(name)), do: unquote(type)
-        def __typed_structor__(:field, unquote(name)), do: unquote(Macro.escape(field))
       end
     end
   end
