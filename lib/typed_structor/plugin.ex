@@ -13,6 +13,12 @@ defmodule TypedStructor.Plugin do
   * `c:after_definition/2`: This macro callback is called right after defining the struct.
   Note that plugins will run in the **reverse** order they are registered.
 
+  > #### Plugins guides {: .tip}
+  >
+  > Here are some [Plugin Guides](guides/plugins/introduction.md)
+  > for creating your own plugins. Please check them out
+  > and feel free to copy-paste the code.
+
   ### Example
 
   Let's define a plugin that defines `Ecto.Schema` while defining a typed struct.

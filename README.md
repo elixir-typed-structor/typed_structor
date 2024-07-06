@@ -1,8 +1,8 @@
 # TypedStructor
 
 [![Build Status](https://github.com/elixir-typed-structor/typed_structor/actions/workflows/elixir.yml/badge.svg)](https://github.com/elixir-typed-structor/typed_structor/actions/workflows/elixir.yml)
-[![Hex.pm](https://img.shields.io/hexpm/v/typed_structor.svg)](https://hex.pm/packages/typed_structor)
-[![Documentation](https://img.shields.io/badge/documentation-gray)](https://hexdocs.pm/typed_structor/)
+[![Hex.pm](https://img.shields.io/hexpm/v/typed_structor?style=flat)](https://hex.pm/packages/typed_structor)
+[![Document](https://img.shields.io/badge/hex-doc-blue?style=flat)](https://hexdocs.pm/typed_structor)
 
 <!-- MODULEDOC -->
 
