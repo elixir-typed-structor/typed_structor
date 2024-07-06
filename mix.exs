@@ -50,6 +50,7 @@ defmodule TypedStructor.MixProject do
         }
       ],
       test_coverage: [
+        summary: [threshold: 100],
         ignore_modules: [
           TypedStructor.Definition,
           TypedStructor.GuideCase,

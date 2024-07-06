@@ -73,4 +73,9 @@ jobs:
         if: ${{ matrix.lint }}
 
       - name: Run tests
+        run: mix test --cover
+        if: ${{ matrix.lint }}
+
+      - name: Run tests
         run: mix test
+        if: ${{ !matrix.lint }}
