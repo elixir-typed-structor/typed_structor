@@ -1,139 +1,128 @@
 defmodule TypeAndEnforceKeysTest do
-  use TypedStructor.TypeCase, async: true
+  use TypedStructor.TestCase, async: true
 
-  test "default is set and enforce is true" do
-    expected_bytecode =
-      test_module do
-        @type t() :: %TestModule{
+  @tag :tmp_dir
+  test "default is set and enforce is true", ctx do
+    expected_types =
+      with_tmpmodule Struct, ctx do
+        @type t() :: %__MODULE__{
                 fixed: boolean()
               }
 
         defstruct [:fixed]
+      after
+        fetch_types!(Struct)
       end
 
-    expected_types = types(expected_bytecode)
-
-    bytecode =
-      deftmpmodule do
+    generated_types =
+      with_tmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor do
           field :fixed, boolean(), default: true, enforce: true
         end
+      after
+        assert %{__struct__: Struct, fixed: true} === build_struct(quote(do: %Struct{}))
+
+        fetch_types!(Struct)
       end
 
-    assert expected_types === types(bytecode)
-
-    assert match?(
-             %{
-               __struct__: TestModule,
-               fixed: true
-             },
-             build_struct(quote(do: %TestModule{}))
-           )
+    assert_type expected_types, generated_types
   end
 
-  test "default is set and enforce is false" do
-    expected_bytecode =
-      test_module do
-        @type t() :: %TestModule{
+  @tag :tmp_dir
+  test "default is set and enforce is false", ctx do
+    expected_types =
+      with_tmpmodule Struct, ctx do
+        @type t() :: %__MODULE__{
                 fixed: boolean()
               }
 
         defstruct [:fixed]
+      after
+        fetch_types!(Struct)
       end
 
-    expected_types = types(expected_bytecode)
-
-    bytecode =
-      deftmpmodule do
+    generated_types =
+      with_tmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor do
           field :fixed, boolean(), default: true
         end
+      after
+        assert %{__struct__: Struct, fixed: true} === build_struct(quote(do: %Struct{}))
+
+        fetch_types!(Struct)
       end
 
-    assert expected_types === types(bytecode)
-
-    assert match?(
-             %{
-               __struct__: TestModule,
-               fixed: true
-             },
-             build_struct(quote(do: %TestModule{}))
-           )
+    assert_type expected_types, generated_types
   end
 
-  test "default is unset and enforce is true" do
-    expected_bytecode =
-      test_module do
-        @type t() :: %TestModule{
+  @tag :tmp_dir
+  test "default is unset and enforce is true", ctx do
+    expected_types =
+      with_tmpmodule Struct, ctx do
+        @type t() :: %__MODULE__{
                 fixed: boolean()
               }
 
         defstruct [:fixed]
+      after
+        fetch_types!(Struct)
       end
 
-    expected_types = types(expected_bytecode)
-
-    bytecode =
-      deftmpmodule do
+    generated_types =
+      with_tmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor do
           field :fixed, boolean(), enforce: true
         end
+      after
+        assert_raise_on_enforce_error([:fixed], quote(do: %Struct{}))
+
+        assert %{__struct__: Struct, fixed: true} ===
+                 build_struct(quote(do: %Struct{fixed: true}))
+
+        fetch_types!(Struct)
       end
 
-    assert expected_types === types(bytecode)
-
-    assert_raise_on_enforce_error([:fixed], quote(do: %TestModule{}))
-
-    assert match?(
-             %{
-               __struct__: TestModule,
-               fixed: true
-             },
-             build_struct(quote(do: %TestModule{fixed: true}))
-           )
+    assert_type expected_types, generated_types
   end
 
-  test "default is unset and enforce is false" do
-    expected_bytecode =
-      test_module do
-        @type t() :: %TestModule{
+  @tag :tmp_dir
+  test "default is unset and enforce is false", ctx do
+    expected_types =
+      with_tmpmodule Struct, ctx do
+        @type t() :: %__MODULE__{
                 fixed: boolean() | nil
               }
 
         defstruct [:fixed]
+      after
+        fetch_types!(Struct)
       end
 
-    expected_types = types(expected_bytecode)
-
-    bytecode =
-      deftmpmodule do
+    generated_types =
+      with_tmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor do
           field :fixed, boolean()
         end
+      after
+        assert %{__struct__: Struct, fixed: nil} === build_struct(quote(do: %Struct{}))
+
+        fetch_types!(Struct)
       end
 
-    assert expected_types === types(bytecode)
-
-    assert match?(
-             %{
-               __struct__: TestModule,
-               fixed: nil
-             },
-             build_struct(quote(do: %TestModule{}))
-           )
+    assert_type expected_types, generated_types
   end
 
   defp assert_raise_on_enforce_error(keys, quoted) do
     assert_raise ArgumentError,
-                 "the following keys must also be given when building struct #{inspect(__MODULE__.TestModule)}: #{inspect(keys)}",
+                 "the following keys must also be given when building struct #{inspect(__MODULE__.Struct)}: #{inspect(keys)}",
                  fn ->
                    Code.eval_quoted(quoted)
                  end

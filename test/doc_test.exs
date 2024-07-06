@@ -1,5 +1,5 @@
-defmodule TypedStructor.DocTest do
-  use TypedStructor.TestCase
+defmodule DocTest do
+  use TypedStructor.TestCase, async: true
 
   @tag :tmp_dir
   test "typedoc", ctx do

@@ -1,5 +1,5 @@
 defmodule TypedStructor.PluginTest do
-  use TypedStructor.TypeCase, async: true
+  use TypedStructor.TestCase, async: true
 
   describe "callbacks order" do
     for plugin <- [Plugin1, Plugin2] do
@@ -57,54 +57,59 @@ defmodule TypedStructor.PluginTest do
   end
 
   describe "before_definition/2" do
-    defmodule ManipulatePlugin do
-      use TypedStructor.Plugin
+    @tag :tmp_dir
+    test "manipulates definition", ctx do
+      deftmpmodule ManipulatePlugin, ctx do
+        use TypedStructor.Plugin
 
-      @impl TypedStructor.Plugin
-      defmacro before_definition(definition, _plugin_opts) do
-        quote do
-          Map.update!(
-            unquote(definition),
-            :fields,
-            fn fields ->
-              Enum.map(fields, fn field ->
-                {name, field} = Keyword.pop!(field, :name)
-                {type, field} = Keyword.pop!(field, :type)
-                name = name |> Atom.to_string() |> String.upcase() |> String.to_atom()
-                type = quote do: unquote(type) | atom()
+        @impl TypedStructor.Plugin
+        defmacro before_definition(definition, _plugin_opts) do
+          quote do
+            Map.update!(
+              unquote(definition),
+              :fields,
+              fn fields ->
+                Enum.map(fields, fn field ->
+                  {name, field} = Keyword.pop!(field, :name)
+                  {type, field} = Keyword.pop!(field, :type)
+                  name = name |> Atom.to_string() |> String.upcase() |> String.to_atom()
+                  type = quote do: unquote(type) | atom()
 
-                [{:name, name}, {:type, type} | field]
-              end)
-            end
-          )
+                  [{:name, name}, {:type, type} | field]
+                end)
+              end
+            )
+          end
         end
       end
-    end
 
-    test "manipulates definition" do
-      expected_bytecode =
-        test_module do
-          @type t() :: %TestModule{
+      expected_types =
+        with_tmpmodule MyStruct, ctx do
+          @type t() :: %__MODULE__{
                   NAME: (String.t() | atom()) | nil
                 }
 
           defstruct [:NAME]
+        after
+          fetch_types!(MyStruct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        test_module do
+      types =
+        with_tmpmodule MyStruct, ctx do
           use TypedStructor
 
           typed_structor do
-            plugin ManipulatePlugin
+            plugin unquote(__MODULE__).ManipulatePlugin
 
             field :name, String.t()
           end
+        after
+          fetch_types!(MyStruct)
         end
 
-      assert expected_types === types(bytecode)
+      assert_type expected_types, types
+    after
+      cleanup_modules([__MODULE__.ManipulatePlugin], ctx.tmp_dir)
     end
   end
 end

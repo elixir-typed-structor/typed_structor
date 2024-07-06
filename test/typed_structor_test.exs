@@ -1,155 +1,161 @@
 defmodule TypedStructorTest do
-  use TypedStructor.TypeCase, async: true
+  @compile {:no_warn_undefined, __MODULE__.Struct}
 
-  test "generates the struct and the type" do
-    expected_bytecode =
-      test_module do
-        @type t() :: %TestModule{
+  use TypedStructor.TestCase, async: true
+
+  @tag :tmp_dir
+  test "generates the struct and the type", ctx do
+    expected_types =
+      with_tmpmodule Struct, ctx do
+        @type t() :: %__MODULE__{
                 age: integer() | nil,
                 name: String.t() | nil
               }
 
         defstruct [:age, :name]
+      after
+        fetch_types!(Struct)
       end
 
-    expected_types = types(expected_bytecode)
-
-    bytecode =
-      deftmpmodule do
+    generated_types =
+      with_tmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor do
           field :name, String.t()
           field :age, integer()
         end
+      after
+        assert %{__struct__: Struct, name: nil, age: nil} === struct(Struct)
+
+        fetch_types!(Struct)
       end
 
-    assert match?(
-             %{
-               __struct__: TestModule,
-               name: nil,
-               age: nil
-             },
-             struct(TestModule)
-           )
-
-    assert expected_types === types(bytecode)
+    assert_type expected_types, generated_types
   end
 
   describe "module option" do
-    test "generates the struct and the type" do
-      expected_bytecode =
-        test_module do
+    @tag :tmp_dir
+    test "generates the struct and the type", ctx do
+      expected_types =
+        with_tmpmodule MyModule, ctx do
           defmodule Struct do
-            @type t() :: %TestModule.Struct{
+            @type t() :: %__MODULE__{
                     age: integer() | nil,
                     name: String.t() | nil
                   }
             defstruct [:age, :name]
           end
+        after
+          fetch_types!(MyModule.Struct)
         end
 
-      expected_types = types(expected_bytecode)
+      cleanup_modules([__MODULE__.MyModule.Struct], ctx.tmp_dir)
 
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule MyModule, ctx do
           use TypedStructor
 
           typed_structor module: Struct do
             field :name, String.t()
             field :age, integer()
           end
+        after
+          assert %{__struct__: MyModule.Struct, name: nil, age: nil} ===
+                   struct(MyModule.Struct)
+
+          fetch_types!(MyModule.Struct)
         end
 
-      assert match?(
-               %{
-                 __struct__: TestModule.Struct,
-                 name: nil,
-                 age: nil
-               },
-               struct(TestModule.Struct)
-             )
+      cleanup_modules([__MODULE__.MyModule.Struct], ctx.tmp_dir)
 
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
   end
 
   describe "enforce option" do
-    test "set enforce on fields" do
-      expected_bytecode =
-        test_module do
-          @type t() :: %TestModule{
+    @tag :tmp_dir
+    test "set enforce on fields", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t() :: %__MODULE__{
                   name: String.t(),
                   age: integer() | nil
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor do
             field :name, String.t(), enforce: true
             field :age, integer()
           end
+        after
+          assert_raise_on_enforce_error(Struct, [:name], quote(do: %Struct{}))
+
+          fetch_types!(Struct)
         end
 
-      assert_raise_on_enforce_error(TestModule, [:name], quote(do: %TestModule{}))
-
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
 
-    test "set enforce on typed_structor" do
-      expected_bytecode =
-        test_module do
-          @type t() :: %TestModule{
+    @tag :tmp_dir
+    test "set enforce on typed_structor", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t() :: %__MODULE__{
                   name: String.t(),
                   age: integer()
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor enforce: true do
             field :name, String.t()
             field :age, integer()
           end
+        after
+          assert_raise_on_enforce_error(
+            Struct,
+            [:name, :age],
+            quote(do: %Struct{})
+          )
+
+          fetch_types!(Struct)
         end
 
-      assert_raise_on_enforce_error(
-        TestModule,
-        [:name, :age],
-        quote(do: %TestModule{})
-      )
-
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
 
-    test "overwrites the enforce option on fields" do
-      expected_bytecode =
-        test_module do
-          @type t() :: %TestModule{
+    @tag :tmp_dir
+    test "overwrites the enforce option on fields", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t() :: %__MODULE__{
                   name: String.t(),
                   age: integer() | nil
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor enforce: true do
@@ -158,65 +164,67 @@ defmodule TypedStructorTest do
           end
 
           def enforce_keys, do: @enforce_keys
+        after
+          assert_raise_on_enforce_error(Struct, [:name], quote(do: %Struct{}))
+
+          assert [:name] === Struct.enforce_keys()
+
+          fetch_types!(Struct)
         end
 
-      assert_raise_on_enforce_error(
-        TestModule,
-        [:name],
-        quote(do: %TestModule{})
-      )
-
-      assert [:name] === TestModule.enforce_keys()
-
-      assert expected_types === types(bytecode)
+      assert expected_types, generated_types
     end
   end
 
   describe "type_kind option" do
-    test "generates opaque type" do
-      expected_bytecode =
-        test_module do
-          @opaque t() :: %TestModule{
+    @tag :tmp_dir
+    test "generates opaque type", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @opaque t() :: %__MODULE__{
                     name: String.t() | nil,
                     age: integer() | nil
                   }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor type_kind: :opaque do
             field :name, String.t()
             field :age, integer()
           end
+        after
+          fetch_types!(Struct)
         end
 
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
 
-    test "generates typep type" do
-      expected_bytecode =
-        test_module do
+    @tag :tmp_dir
+    test "generates typep type", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
           # suppress unused warning
           @type external_t() :: t()
 
-          @typep t() :: %TestModule{
+          @typep t() :: %__MODULE__{
                    name: String.t() | nil,
                    age: integer() | nil
                  }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           # suppress unused warning
@@ -226,56 +234,62 @@ defmodule TypedStructorTest do
             field :name, String.t()
             field :age, integer()
           end
+        after
+          fetch_types!(Struct)
         end
 
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
   end
 
   describe "type_name option" do
-    test "generates custom type_name type" do
-      expected_bytecode =
-        test_module do
-          @type test_type() :: %TestModule{
+    @tag :tmp_dir
+    test "generates custom type_name type", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type test_type() :: %__MODULE__{
                   name: String.t() | nil,
                   age: integer() | nil
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor type_name: :test_type do
             field :name, String.t()
             field :age, integer()
           end
+        after
+          fetch_types!(Struct)
         end
 
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
   end
 
   describe "default option on the field" do
-    test "generates struct with default values" do
-      expected_bytecode =
-        test_module do
-          @type t() :: %TestModule{
+    @tag :tmp_dir
+    test "generates struct with default values", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t() :: %__MODULE__{
                   name: String.t(),
                   age: integer() | nil
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor do
@@ -284,39 +298,35 @@ defmodule TypedStructorTest do
           end
 
           def enforce_keys, do: @enforce_keys
+        after
+          assert %{__struct__: Struct, name: "Phil", age: nil} === struct(Struct)
+
+          assert [] === Struct.enforce_keys()
+
+          fetch_types!(Struct)
         end
 
-      assert match?(
-               %{
-                 __struct__: TestModule,
-                 name: "Phil",
-                 age: nil
-               },
-               struct(TestModule)
-             )
-
-      assert [] === TestModule.enforce_keys()
-
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
   end
 
   describe "parameter" do
-    test "generates parameterized type" do
-      expected_bytecode =
-        test_module do
-          @type t(age) :: %TestModule{
+    @tag :tmp_dir
+    test "generates parameterized type", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t(age) :: %__MODULE__{
                   age: age | nil,
                   name: String.t() | nil
                 }
 
           defstruct [:age, :name]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor do
@@ -325,35 +335,31 @@ defmodule TypedStructorTest do
             field :name, String.t()
             field :age, age
           end
+        after
+          assert %{__struct__: Struct, name: nil, age: nil} === struct(Struct)
+
+          fetch_types!(Struct)
         end
 
-      assert match?(
-               %{
-                 __struct__: TestModule,
-                 name: nil,
-                 age: nil
-               },
-               struct(TestModule)
-             )
-
-      assert expected_types === types(bytecode)
+      assert_type expected_types, generated_types
     end
 
-    test "generates ordered parameters for the type" do
-      expected_bytecode =
-        test_module do
-          @type t(age, name) :: %TestModule{
+    @tag :tmp_dir
+    test "generates ordered parameters for the type", ctx do
+      expected_types =
+        with_tmpmodule Struct, ctx do
+          @type t(age, name) :: %__MODULE__{
                   age: age | nil,
                   name: name | nil
                 }
 
           defstruct [:name, :age]
+        after
+          fetch_types!(Struct)
         end
 
-      expected_types = types(expected_bytecode)
-
-      bytecode =
-        deftmpmodule do
+      generated_types =
+        with_tmpmodule Struct, ctx do
           use TypedStructor
 
           typed_structor do
@@ -363,24 +369,32 @@ defmodule TypedStructorTest do
             field :name, name
             field :age, age
           end
+        after
+          assert %{__struct__: Struct, name: nil, age: nil} === struct(Struct)
+
+          fetch_types!(Struct)
         end
 
-      assert match?(
-               %{
-                 __struct__: TestModule,
-                 name: nil,
-                 age: nil
-               },
-               struct(TestModule)
-             )
+      assert_type expected_types, generated_types
+    end
 
-      assert expected_types === types(bytecode)
+    test "raises an error when the parameter is not a atom" do
+      assert_raise ArgumentError, ~r[expected an atom, got: "age"], fn ->
+        defmodule Struct do
+          use TypedStructor
+
+          typed_structor do
+            parameter "age"
+          end
+        end
+      end
     end
   end
 
   describe "define_struct option" do
-    test "implements Access" do
-      deftmpmodule do
+    @tag :tmp_dir
+    test "implements Access", ctx do
+      deftmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor define_struct: false do
@@ -393,20 +407,16 @@ defmodule TypedStructorTest do
         defstruct name: "Phil", age: 20
       end
 
-      assert match?(
-               %{
-                 __struct__: TestModule,
-                 name: "Phil",
-                 age: 20
-               },
-               struct(TestModule)
-             )
+      assert %{__struct__: Struct, name: "Phil", age: 20} === struct(Struct)
+    after
+      cleanup_modules([__MODULE__.Struct], ctx.tmp_dir)
     end
   end
 
   describe "works with Ecto.Schema" do
-    test "works" do
-      deftmpmodule do
+    @tag :tmp_dir
+    test "works", ctx do
+      deftmpmodule Struct, ctx do
         use TypedStructor
 
         typed_structor define_struct: false do
@@ -424,16 +434,11 @@ defmodule TypedStructorTest do
         end
       end
 
-      assert [:id, :name, :age] === TestModule.__schema__(:fields)
+      assert [:id, :name, :age] === Struct.__schema__(:fields)
 
-      assert match?(
-               %{
-                 __struct__: TestModule,
-                 name: nil,
-                 age: 20
-               },
-               struct(TestModule)
-             )
+      assert match?(%{__struct__: Struct, id: nil, name: nil, age: 20}, struct(Struct))
+    after
+      cleanup_modules([__MODULE__.Struct], ctx.tmp_dir)
     end
   end
 
