@@ -7,7 +7,7 @@ defmodule TypedStructor.Definition do
   @type t() :: %__MODULE__{
           options: Keyword.t(),
           fields: [Keyword.t()],
-          parameters: [atom()]
+          parameters: [Keyword.t()]
         }
 
   defstruct [:options, :fields, :parameters]
