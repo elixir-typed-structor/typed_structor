@@ -1,6 +1,8 @@
 defmodule ConfigTest do
+  @compile {:no_warn_undefined, ConfigTest.Struct}
+
   # disable async for this test for changing the application env
-  use TypedStructor.TypeCase, async: false
+  use TypedStructor.TestCase, async: false
 
   defmodule Plugin do
     use TypedStructor.Plugin
@@ -24,25 +26,29 @@ defmodule ConfigTest do
     end
   end
 
-  test "registers plugins from the config" do
+  @tag :tmp_dir
+  test "registers plugins from the config", ctx do
     set_plugins_config([Plugin, {PluginWithOpts, [foo: :bar]}])
 
-    deftmpmodule do
-      use TypedStructor
+    plugin_calls =
+      with_tmpmodule Struct, ctx do
+        use TypedStructor
 
-      Module.register_attribute(__MODULE__, :plugin_calls, accumulate: true)
+        Module.register_attribute(__MODULE__, :plugin_calls, accumulate: true)
 
-      typed_structor do
-        field :name, String.t()
+        typed_structor do
+          field :name, String.t()
+        end
+
+        def plugin_calls, do: @plugin_calls
+      after
+        Struct.plugin_calls()
       end
-
-      def plugin_calls, do: @plugin_calls
-    end
 
     assert [
              {PluginWithOpts, [foo: :bar]},
              {Plugin, []}
-           ] === TestModule.plugin_calls()
+           ] === plugin_calls
   end
 
   test "raises if the plugin is not a module" do
@@ -51,7 +57,7 @@ defmodule ConfigTest do
     assert_raise ArgumentError,
                  ~r/Expected a plugin module or a tuple with a plugin module and its keyword options/,
                  fn ->
-                   test_module do
+                   defmodule Struct do
                      use TypedStructor
 
                      typed_structor do
@@ -67,7 +73,7 @@ defmodule ConfigTest do
     assert_raise ArgumentError,
                  ~r/Expected a plugin module or a tuple with a plugin module and its keyword options/,
                  fn ->
-                   test_module do
+                   defmodule Struct do
                      use TypedStructor
 
                      typed_structor do

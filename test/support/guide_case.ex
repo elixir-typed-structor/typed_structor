@@ -23,7 +23,10 @@ defmodule TypedStructor.GuideCase do
   end
 
   def types(bytecode) when is_binary(bytecode) do
-    TypedStructor.TypeCase.types(bytecode) <> "\n"
+    bytecode
+    |> TypedStructor.TestCase.fetch_types!()
+    |> TypedStructor.TestCase.format_types()
+    |> Kernel.<>("\n")
   end
 
   defp extract_code(file) do

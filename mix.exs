@@ -48,6 +48,14 @@ defmodule TypedStructor.MixProject do
         links: %{
           "GitHub" => @source_url
         }
+      ],
+      test_coverage: [
+        summary: [threshold: 100],
+        ignore_modules: [
+          TypedStructor.Definition,
+          TypedStructor.GuideCase,
+          TypedStructor.TestCase
+        ]
       ]
     ]
   end
