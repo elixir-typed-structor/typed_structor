@@ -137,6 +137,7 @@ defmodule TypedStructor do
   defp register_global_plugins do
     :typed_structor
     |> Application.get_env(:plugins, [])
+    |> List.wrap()
     |> Enum.map(fn
       {plugin, opts} when is_atom(plugin) and is_list(opts) ->
         {plugin, opts}

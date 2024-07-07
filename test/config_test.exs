@@ -84,7 +84,7 @@ defmodule ConfigTest do
   end
 
   defp set_plugins_config(plugins) do
-    previous_value = Application.get_env(:typed_structor, :plugins)
+    previous_value = Application.get_env(:typed_structor, :plugins, [])
     Application.put_env(:typed_structor, :plugins, plugins)
     on_exit(fn -> Application.put_env(:typed_structor, :plugins, previous_value) end)
   end
