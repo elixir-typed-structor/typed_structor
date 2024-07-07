@@ -6,22 +6,21 @@ defmodule TypedStructor.GuideCase do
   using opts do
     guide = Keyword.fetch!(opts, :guide)
 
-    file = Path.expand([__DIR__, "../../../", "guides/plugins/", guide])
-
-    ast = Code.string_to_quoted!(extract_code(file))
+    ast = Code.string_to_quoted!(extract_code(guide))
 
     quote do
-      Code.compiler_options(debug_info: true)
+      Code.compiler_options(debug_info: true, docs: true)
 
       {:module, _module_name, bytecode, _submodule} = unquote(ast)
 
       ExUnit.Case.register_module_attribute(__MODULE__, :bytecode)
       @bytecode bytecode
 
-      import unquote(__MODULE__), only: [types: 1]
+      import unquote(__MODULE__)
     end
   end
 
+  @spec types(binary()) :: binary()
   def types(bytecode) when is_binary(bytecode) do
     bytecode
     |> TypedStructor.TestCase.fetch_types!()
@@ -29,9 +28,11 @@ defmodule TypedStructor.GuideCase do
     |> Kernel.<>("\n")
   end
 
-  defp extract_code(file) do
-    content =
-      File.read!(file)
+  @spec extract_code(String.t()) :: String.t()
+  def extract_code(filename) do
+    file = Path.expand([__DIR__, "../../../", "guides/plugins/", filename])
+
+    content = File.read!(file)
 
     content
     |> String.split("\n")

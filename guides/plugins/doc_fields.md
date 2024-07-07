@@ -1,0 +1,171 @@
+# Add fields docs to the `@typedoc`
+
+## Implement
+```elixir
+defmodule Guides.Plugins.DocFields do
+  @moduledoc """
+  The `DocFields` plugin generates documentation for fields and parameters.
+  Simply add the `:doc` option to the `field` and `parameter` macros to document them.
+
+  ## Example
+
+      use TypedStructor
+
+      typed_structor do
+        @typedoc \"""
+        This is a user struct.
+        \"""
+        plugin Guides.Plugins.DocFields
+
+        parameter :age, doc: "The age parameter."
+
+        field :name, String.t(), doc: "The name of the user."
+        field :age, age, doc: "The age of the user."
+      end
+
+  This will generate the following documentation for you:
+
+      @typedoc \"""
+      This is a user struct.
+
+
+      ## Parameters
+
+      | Name | Description |
+      |------|-------------|
+      |`:age` | The age parameter.|
+
+
+      ## Fields
+
+      | Name | Type | Description |
+      |------|------|-------------|
+      |`:name` | `String.t() \| nil` | The name of the user.|
+      |`:age` | `age \| nil` | The age of the user.|
+      \"""
+
+      @type t(age) :: %User{age: age | nil, name: String.t() | nil}
+  """
+
+  use TypedStructor.Plugin
+
+  @impl TypedStructor.Plugin
+  defmacro before_definition(definition, _opts) do
+    quote do
+      @typedoc unquote(__MODULE__).__generate_doc__(unquote(definition), @typedoc)
+
+      unquote(definition)
+    end
+  end
+
+  def __generate_doc__(_definition, false), do: nil
+
+  def __generate_doc__(definition, typedoc) do
+    parameters =
+      Enum.map(definition.parameters, fn parameter ->
+        name = Keyword.fetch!(parameter, :name)
+        doc = Keyword.get(parameter, :doc, "*not documented*")
+
+        ["`#{inspect(name)}`", doc]
+      end)
+
+    parameters_docs =
+      if length(parameters) > 0 do
+        """
+        ## Parameters
+
+        | Name | Description |
+        |------|-------------|
+        #{join_rows(parameters)}
+        """
+      end
+
+    fields =
+      Enum.map(definition.fields, fn field ->
+        name = Keyword.fetch!(field, :name)
+
+        type = Keyword.fetch!(field, :type)
+
+        type =
+          if Keyword.get(field, :enforce, false) or Keyword.has_key?(field, :default) do
+            Macro.to_string(type)
+          else
+            # escape `|`
+            "#{Macro.to_string(type)} \\| nil"
+          end
+
+        doc = Keyword.get(field, :doc, "*not documented*")
+
+        ["`#{inspect(name)}`", "`#{type}`", doc]
+      end)
+
+    fields_docs =
+      if length(fields) > 0 do
+        """
+        ## Fields
+
+        | Name | Type | Description |
+        |------|------|-------------|
+        #{join_rows(fields)}
+        """
+      end
+
+    [parameters_docs, fields_docs]
+    |> Enum.reject(&is_nil/1)
+    |> case do
+      [] ->
+        typedoc
+
+      docs ->
+        """
+        #{typedoc}
+
+        #{Enum.join(docs, "\n\n")}
+        """
+    end
+  end
+
+  defp join_rows(rows) do
+    Enum.map_join(rows, "\n", fn row -> "|" <> Enum.join(row, " | ") <> "|" end)
+  end
+end
+```
+
+## Usage
+```elixir
+defmodule User do
+  @moduledoc false
+
+  use TypedStructor
+
+  typed_structor do
+    @typedoc """
+    This is a user struct.
+    """
+    plugin Guides.Plugins.DocFields
+
+    parameter :age, doc: "The age parameter."
+
+    field :name, String.t(), doc: "The name of the user."
+    field :age, age, doc: "The age of the user."
+  end
+end
+```
+
+```elixir
+iex> t User.t
+@type t(age) :: %User{age: age | nil, name: String.t() | nil}
+
+This is a user struct.
+
+## Parameters
+
+Name | Description
+:age | The age parameter.
+
+## Fields
+
+Name  | Type             | Description
+:name | String.t() | nil | The name of the user.
+:age  | age | nil        | The age of the user.
+```

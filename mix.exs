@@ -36,6 +36,7 @@ defmodule TypedStructor.MixProject do
           "guides/plugins/registering_plugins_globally.md",
           "guides/plugins/accessible.md",
           "guides/plugins/reflection.md",
+          "guides/plugins/doc_fields.md",
           "guides/plugins/type_only_on_ecto_schema.md",
           "guides/plugins/primary_key_and_timestamps.md",
           "guides/plugins/derive_jason.md",
