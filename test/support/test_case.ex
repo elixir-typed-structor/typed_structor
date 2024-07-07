@@ -30,7 +30,7 @@ defmodule TypedStructor.TestCase do
       |> Macro.expand(__CALLER__)
       |> then(&Module.concat(__CALLER__.module, &1))
 
-    code = Keyword.fetch(options, :do)
+    code = Keyword.fetch!(options, :do)
 
     content =
       """
@@ -60,14 +60,14 @@ defmodule TypedStructor.TestCase do
   def __with_file__(%{tmp_dir: dir}, {module_name, content}, fun) when is_function(fun, 0) do
     path = Path.join([dir, Atom.to_string(module_name)])
 
-    try do
-      File.write!(path, content)
-      compile_file!(path, dir)
+    File.write!(path, content)
+    mods = compile_file!(path, dir)
 
+    try do
       fun.()
     after
       File.rm!(path)
-      cleanup_modules([module_name], dir)
+      cleanup_modules(mods, dir)
     end
   end
 
@@ -139,7 +139,7 @@ defmodule TypedStructor.TestCase do
     module
     |> Code.Typespec.fetch_types()
     |> case do
-      :error -> refute "Failed to fetch types for module #{module}"
+      :error -> flunk("Failed to fetch types for module #{module}")
       {:ok, types} -> types
     end
   end
@@ -150,18 +150,26 @@ defmodule TypedStructor.TestCase do
   def fetch_doc!(module, :moduledoc) when is_atom(module) do
     case Code.fetch_docs(module) do
       {:docs_v1, _, :elixir, _, %{"en" => doc}, _, _} -> doc
-      _ -> refute "Failed to fetch moduledoc for #{module}"
+      _ -> flunk("Failed to fetch moduledoc for #{module}")
     end
   end
 
   def fetch_doc!(module, {type, name, arity}) when is_atom(module) do
-    with(
-      {:docs_v1, _, :elixir, _, _, _, docs} <- Code.fetch_docs(module),
-      {_, _, _, %{"en" => doc}, _} <- List.keyfind(docs, {type, name, arity}, 0)
-    ) do
-      doc
-    else
-      _other -> refute "Failed to fetch doc for #{inspect({type, name, arity})} at #{module}"
+    docs =
+      case Code.fetch_docs(module) do
+        {:docs_v1, _, :elixir, _, _, _, docs} -> docs
+        {:error, reason} -> flunk("Failed to fetch doc for #{module}: #{inspect(reason)}")
+      end
+
+    case List.keyfind(docs, {type, name, arity}, 0) do
+      nil ->
+        flunk("""
+        Failed to fetch doc for #{inspect({type, name, arity})} at #{module}, docs:
+        #{Enum.map_join(docs, "  \n", fn doc -> inspect(elem(doc, 0)) end)}
+        """)
+
+      {_, _, _, %{"en" => doc}, _} ->
+        doc
     end
   end
 
@@ -174,7 +182,7 @@ defmodule TypedStructor.TestCase do
     expected_types = format_types(expected)
 
     if String.length(String.trim(expected_types)) === 0 do
-      refute "Expected types are empty: #{inspect(expected)}"
+      flunk("Expected types are empty: #{inspect(expected)}")
     end
 
     assert expected_types == format_types(actual)
