@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.3.0...v0.4.0) (2024-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* store parameters as keywords instead of atoms to retain more information ([#10](https://github.com/elixir-typed-structor/typed_structor/issues/10))
+
+### Code Refactoring
+
+* store parameters as keywords instead of atoms to retain more information ([#10](https://github.com/elixir-typed-structor/typed_structor/issues/10)) ([df5b17e](https://github.com/elixir-typed-structor/typed_structor/commit/df5b17e09cb569cb1c93c470db0e9eb322e429b8))
+
+### Features
+
+* add doc_fields guide ([#11](https://github.com/elixir-typed-structor/typed_structor/pull/11))
+
 ## [0.3.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.2.0...v0.3.0) (2024-07-03)
 
 
