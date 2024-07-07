@@ -91,7 +91,8 @@ defmodule TypedStructor do
 
       # create a lexical scope
       try do
-        import TypedStructor, only: [field: 2, field: 3, parameter: 1, plugin: 1, plugin: 2]
+        import TypedStructor,
+          only: [field: 2, field: 3, parameter: 1, parameter: 2, plugin: 1, plugin: 2]
 
         unquote(register_global_plugins())
 
@@ -136,6 +137,7 @@ defmodule TypedStructor do
   defp register_global_plugins do
     :typed_structor
     |> Application.get_env(:plugins, [])
+    |> List.wrap()
     |> Enum.map(fn
       {plugin, opts} when is_atom(plugin) and is_list(opts) ->
         {plugin, opts}
@@ -206,14 +208,17 @@ defmodule TypedStructor do
 
       fied :number, int # not int()
   """
-  defmacro parameter(name) when is_atom(name) do
+  defmacro parameter(name, opts \\ [])
+
+  defmacro parameter(name, opts) when is_atom(name) and is_list(opts) do
     quote do
-      @__ts_struct_parameters__ unquote(name)
+      @__ts_struct_parameters__ Keyword.merge(unquote(opts), name: unquote(name))
     end
   end
 
-  defmacro parameter(name) do
-    raise ArgumentError, "expected an atom, got: #{inspect(name)}"
+  defmacro parameter(name, opts) do
+    raise ArgumentError,
+          "name must be an atom and opts must be a list, got: #{inspect(name)} and #{inspect(opts)}"
   end
 
   @doc """
@@ -285,7 +290,15 @@ defmodule TypedStructor do
 
       type_name = Keyword.get(@__ts_options__, :type_name, :t)
 
-      parameters = Enum.map(@__ts_definition__.parameters, &Macro.var(&1, __MODULE__))
+      parameters =
+        Enum.map(
+          @__ts_definition__.parameters,
+          fn parameter ->
+            parameter
+            |> Keyword.fetch!(:name)
+            |> Macro.var(__MODULE__)
+          end
+        )
 
       case Keyword.get(@__ts_options__, :type_kind, :type) do
         :type ->

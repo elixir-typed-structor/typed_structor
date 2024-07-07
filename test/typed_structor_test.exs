@@ -379,15 +379,17 @@ defmodule TypedStructorTest do
     end
 
     test "raises an error when the parameter is not a atom" do
-      assert_raise ArgumentError, ~r[expected an atom, got: "age"], fn ->
-        defmodule Struct do
-          use TypedStructor
+      assert_raise ArgumentError,
+                   ~r|name must be an atom and opts must be a list|,
+                   fn ->
+                     defmodule Struct do
+                       use TypedStructor
 
-          typed_structor do
-            parameter "age"
-          end
-        end
-      end
+                       typed_structor do
+                         parameter "age"
+                       end
+                     end
+                   end
     end
   end
 

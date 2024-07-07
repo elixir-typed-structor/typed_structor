@@ -21,7 +21,7 @@ defmodule Guides.Plugins.Reflection do
         |> Enum.to_list()
 
       def __typed_structor__(:fields), do: unquote(fields)
-      def __typed_structor__(:parameters), do: unquote(definition.parameters)
+      def __typed_structor__(:parameters), do: Enum.map(unquote(definition.parameters), &Keyword.fetch!(&1, :name))
       def __typed_structor__(:enforced_fields), do: unquote(enforced_fields)
 
       for field <- definition.fields do
