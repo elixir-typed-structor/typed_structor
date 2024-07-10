@@ -17,7 +17,7 @@ defmodule TypedStructor.MixProject do
       source: @source_url,
       homepage_url: @source_url,
       docs: [
-        main: "TypedStructor",
+        main: "readme",
         source_url: @source_url,
         extra_section: "Guides",
         groups_for_extras: [
