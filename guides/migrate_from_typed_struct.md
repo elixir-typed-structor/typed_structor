@@ -12,7 +12,7 @@ It is a drop-in replacement for `typed_struct`.
      [
        # ...deps
 -      {:typed_struct, "~> 0.3.0"},
-+      {:typed_structor, "~> 0.1"},
++      {:typed_structor, "~> 0.4"},
      ]
    end
 ```

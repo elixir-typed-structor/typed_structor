@@ -7,7 +7,7 @@ defmodule TypedStructor.MixProject do
     [
       app: :typed_structor,
       description: "TypedStructor is a library for defining structs with types effortlessly.",
-      version: "0.4.0",
+      version: "0.4.1",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
