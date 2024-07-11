@@ -1,13 +1,14 @@
 defmodule TypedStructor.MixProject do
   use Mix.Project
 
+  @version "0.4.1"
   @source_url "https://github.com/elixir-typed-structor/typed_structor"
 
   def project do
     [
       app: :typed_structor,
       description: "TypedStructor is a library for defining structs with types effortlessly.",
-      version: "0.4.1",
+      version: @version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -19,6 +20,7 @@ defmodule TypedStructor.MixProject do
       docs: [
         main: "readme",
         source_url: @source_url,
+        source_ref: "v#{@version}",
         extra_section: "Guides",
         groups_for_extras: [
           Guides: ~r<(guides/[^\/]+\.md)|(README.md)>,
@@ -47,6 +49,7 @@ defmodule TypedStructor.MixProject do
         name: "typed_structor",
         licenses: ["MIT"],
         links: %{
+          "Changelog" => "https://hexdocs.pm/typed_structor/changelog.html",
           "GitHub" => @source_url
         }
       ],
