@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/elixir-typed-structor/typed_structor/compare/v0.4.1...v0.4.2) (2024-07-11)
+
+
+### Documentation
+
+* this release is a documentation update and does not contain any new features or bug fixes
+
+
 ## [0.4.1](https://github.com/elixir-typed-structor/typed_structor/compare/v0.4.0...v0.4.1) (2024-07-10)
 
 
