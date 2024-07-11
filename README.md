@@ -131,7 +131,11 @@ defmodule User do
 end
 ```
 
-If you prefer to define a struct in a submodule, pass the `module` option.
+If you prefer to define a struct in a submodule, you can use
+the `module` option with `TypedStructor`. This allows you to
+encapsulate the struct definition within a specific submodule context.
+
+Consider this example:
 ```elixir
 defmodule User do
   use TypedStructor
@@ -144,27 +148,66 @@ defmodule User do
   end
 end
 ```
-
-You can define the type only without defining the struct,
-it is useful when the struct is defined by another library(like `Ecto.Schema`).
+When defining a struct in a submodule, the `typed_structor` block
+functions similarly to a `defmodule` block. Therefore,
+the previous example can be alternatively written as:
 ```elixir
 defmodule User do
-  use Ecto.Schema
-  use TypedStructor
+  defmodule Profile do
+    use TypedStructor
 
-  typed_structor define_struct: false do
-    field :id, pos_integer()
-    field :name, String.t()
-    field :age, non_neg_integer(), default: 0
-  end
-
-  schema "users" do
-    field :name, :string
-    field :age, :integer, default: 0
+    typed_structor do
+      field :id, pos_integer()
+      field :name, String.t()
+      field :age, non_neg_integer()
+    end
   end
 end
 ```
 
+Furthermore, the `typed_structor` block allows you to
+define functions, derive protocols, and more, just
+as you would within a `defmodule` block. Here's a example:
+```elixir
+defmodule User do
+  use TypedStructor
+
+  typed_structor module: Profile, define_struct: false do
+    @derive {Jason.Encoder, only: [:email]}
+    field :email, String.t()
+
+    use Ecto.Schema
+    @primary_key false
+
+    schema "users" do
+      Ecto.Schema.field(:email, :string)
+    end
+
+    import Ecto.Changeset
+
+    def changeset(%__MODULE__{} = user, attrs) do
+      user
+      |> cast(attrs, [:email])
+      |> validate_required([:email])
+    end
+  end
+end
+```
+Now, you can interact with these structures:
+```elixir
+iex> User.Profile.__struct__()
+%User.Profile{__meta__: #Ecto.Schema.Metadata<:built, "users">, email: nil}
+iex> Jason.encode!(%User.Profile{})
+"{\"email\":null}"
+iex> User.Profile.changeset(%User.Profile{}, %{"email" => "my@email.com"})
+#Ecto.Changeset<
+  action: nil,
+  changes: %{email: "my@email.com"},
+  errors: [],
+  data: #User.Profile<>,
+  valid?: true
+>
+```
 ## Documentation
 
 To add a `@typedoc` to the struct type, just add the attribute in the typed_structor block:
