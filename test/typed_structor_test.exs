@@ -5,7 +5,7 @@ defmodule TypedStructorTest do
 
   @tag :tmp_dir
   test "generates the struct and the type", ctx do
-    expected_types =
+    {expected_types, expected_sub_types}  =
       with_tmpmodule Struct, ctx do
         @type t() :: %__MODULE__{
                 age: integer() | nil,
@@ -13,11 +13,19 @@ defmodule TypedStructorTest do
               }
 
         defstruct [:age, :name]
+
+        defmodule SubStruct do
+          @type t() :: %__MODULE__{
+                  parent: Struct.t() | Ecto.Assocation.NotLoaded.t() | nil
+                }
+
+          defstruct [:parent]
+        end
       after
-        fetch_types!(Struct)
+        {fetch_types!(Struct), fetch_types!(Struct.SubStruct)}
       end
 
-    generated_types =
+    {generated_types, generated_sub_types} =
       with_tmpmodule Struct, ctx do
         use TypedStructor
 
@@ -25,13 +33,22 @@ defmodule TypedStructorTest do
           field :name, String.t()
           field :age, integer()
         end
+
+        defmodule SubStruct do
+          use TypedStructor
+
+          typed_structor do
+            field :parent, Struct.t()
+          end
+        end
       after
         assert %{__struct__: Struct, name: nil, age: nil} === struct(Struct)
 
-        fetch_types!(Struct)
+        {fetch_types!(Struct), fetch_types!(Struct.SubStruct)}
       end
 
     assert_type expected_types, generated_types
+    assert_type expected_sub_types, generated_sub_types
   end
 
   describe "module option" do
