@@ -5,7 +5,7 @@ defmodule TypedStructorTest do
 
   @tag :tmp_dir
   test "generates the struct and the type", ctx do
-    {expected_types, expected_sub_types}  =
+    {expected_types, expected_sub_types} =
       with_tmpmodule Struct, ctx do
         @type t() :: %__MODULE__{
                 age: integer() | nil,
@@ -38,7 +38,7 @@ defmodule TypedStructorTest do
           use TypedStructor
 
           typed_structor do
-            assoc :parent, Struct.t()
+            assoc(:parent, Struct.t())
           end
         end
       after

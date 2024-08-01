@@ -207,7 +207,6 @@ defmodule TypedStructor do
     end
   end
 
-
   @doc """
   Defines a type parameter in a `typed_structor/2`.
 
