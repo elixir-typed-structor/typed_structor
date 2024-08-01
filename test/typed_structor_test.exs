@@ -16,10 +16,11 @@ defmodule TypedStructorTest do
 
         defmodule SubStruct do
           @type t() :: %__MODULE__{
-                  parent: (Struct.t() | Ecto.Association.NotLoaded.t()) | nil
+                  parent: (Struct.t() | Ecto.Association.NotLoaded.t()) | nil,
+                  parents: ([Struct.t()] | Ecto.Association.NotLoaded.t()) | nil
                 }
 
-          defstruct [:parent]
+          defstruct [:parent, :parents]
         end
       after
         {fetch_types!(Struct), fetch_types!(Struct.SubStruct)}
@@ -39,6 +40,7 @@ defmodule TypedStructorTest do
 
           typed_structor do
             assoc(:parent, Struct.t())
+            assoc(:parents, [Struct.t()])
           end
         end
       after
