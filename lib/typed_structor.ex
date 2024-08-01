@@ -92,7 +92,7 @@ defmodule TypedStructor do
       # create a lexical scope
       try do
         import TypedStructor,
-          only: [field: 2, field: 3, parameter: 1, parameter: 2, plugin: 1, plugin: 2]
+          only: [assoc: 2, field: 2, field: 3, parameter: 1, parameter: 2, plugin: 1, plugin: 2]
 
         unquote(register_global_plugins())
 
@@ -197,6 +197,16 @@ defmodule TypedStructor do
       @__ts_struct_fields__ Keyword.merge(@__ts_options__, unquote(options))
     end
   end
+
+  defmacro assoc(name, type, options \\ []) do
+    type = quote(do: unquote(type) | Ecto.Association.NotLoaded.t())
+    options = Keyword.merge(options, name: name, type: Macro.escape(type))
+
+    quote do
+      @__ts_struct_fields__ Keyword.merge(@__ts_options__, unquote(options))
+    end
+  end
+
 
   @doc """
   Defines a type parameter in a `typed_structor/2`.
