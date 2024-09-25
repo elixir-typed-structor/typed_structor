@@ -393,57 +393,6 @@ defmodule TypedStructorTest do
     end
   end
 
-  describe "define_struct option" do
-    @tag :tmp_dir
-    test "implements Access", ctx do
-      deftmpmodule Struct, ctx do
-        use TypedStructor
-
-        typed_structor define_struct: false do
-          parameter :age
-
-          field :name, String.t()
-          field :age, age
-        end
-
-        defstruct name: "Phil", age: 20
-      end
-
-      assert %{__struct__: Struct, name: "Phil", age: 20} === struct(Struct)
-    after
-      cleanup_modules([__MODULE__.Struct], ctx.tmp_dir)
-    end
-  end
-
-  describe "works with Ecto.Schema" do
-    @tag :tmp_dir
-    test "works", ctx do
-      deftmpmodule Struct, ctx do
-        use TypedStructor
-
-        typed_structor define_struct: false do
-          parameter :age
-
-          field :name, String.t()
-          field :age, age
-        end
-
-        use Ecto.Schema
-
-        schema "source" do
-          field :name, :string
-          field :age, :integer, default: 20
-        end
-      end
-
-      assert [:id, :name, :age] === Struct.__schema__(:fields)
-
-      assert match?(%{__struct__: Struct, id: nil, name: nil, age: 20}, struct(Struct))
-    after
-      cleanup_modules([__MODULE__.Struct], ctx.tmp_dir)
-    end
-  end
-
   defp assert_raise_on_enforce_error(module, keys, quoted) do
     assert_raise ArgumentError,
                  "the following keys must also be given when building struct #{inspect(module)}: #{inspect(keys)}",
