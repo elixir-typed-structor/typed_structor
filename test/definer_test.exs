@@ -1,5 +1,6 @@
 defmodule DefinerTest do
   @compile {:no_warn_undefined, __MODULE__.Struct}
+  @compile {:no_warn_undefined, __MODULE__.MyException}
 
   use TypedStructor.TestCase, async: true
 
@@ -80,6 +81,68 @@ defmodule DefinerTest do
       assert match?(%{__struct__: Struct, id: nil, name: nil, age: 20}, struct(Struct))
     after
       cleanup_modules([__MODULE__.Struct], ctx.tmp_dir)
+    end
+  end
+
+  describe "defexception" do
+    @tag :tmp_dir
+    test "works", ctx do
+      expected_types =
+        with_tmpmodule MyException, ctx do
+          @type t() :: %__MODULE__{
+                  message: String.t() | nil
+                }
+
+          defexception [:message]
+        after
+          fetch_types!(MyException)
+        end
+
+      generated_types =
+        with_tmpmodule MyException, ctx do
+          use TypedStructor
+
+          typed_structor definer: :defexception do
+            field :message, String.t()
+          end
+
+          @impl Exception
+          def exception(arguments) do
+            %__MODULE__{message: Keyword.fetch!(arguments, :message)}
+          end
+
+          @impl Exception
+          def message(%__MODULE__{message: message}) do
+            message
+          end
+        after
+          exception = MyException.exception(message: "this is an error")
+          assert is_exception(exception)
+          assert "this is an error" === Exception.message(exception)
+          fetch_types!(MyException)
+        end
+
+      assert_type expected_types, generated_types
+    end
+
+    @tag :tmp_dir
+    test "define_struct false", ctx do
+      deftmpmodule MyException, ctx do
+        use TypedStructor
+
+        typed_structor define_struct: false do
+          parameter :message
+
+          field :message, message
+        end
+
+        defexception message: "error"
+      end
+
+      assert %{__struct__: MyException, __exception__: true, message: "error"} ===
+               struct(MyException)
+    after
+      cleanup_modules([__MODULE__.MyException], ctx.tmp_dir)
     end
   end
 end
