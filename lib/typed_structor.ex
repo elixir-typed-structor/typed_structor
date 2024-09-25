@@ -20,9 +20,30 @@ defmodule TypedStructor do
 
     * `:module` - if provided, a new submodule will be created with the struct.
     * `:enforce` - if `true`, the struct will enforce the keys, see `field/3` options for more information.
-    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+    * `:definer` - the definer module to use to define the struct, record or exception. Defaults to `:defstruct`. It also accepts a macro that receives the definition struct and returns the AST. See definer section below.
     * `:type_kind` - the kind of type to use for the struct. Defaults to `type`, can be `opaque` or `typep`.
     * `:type_name` - the name of the type to use for the struct. Defaults to `t`.
+
+  ## Definer
+  There are one available definer for now, `:defstruct`, which defines a struct and a type for a given definition.
+
+  ### `:defstruct` options
+
+    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+
+  ### custom definer
+
+      defmodule MyStruct do
+        # you must require the definer module to use its define/1 macro
+        require MyDefiner
+
+        use TypedStructor
+
+        typed_structor definer: &MyDefiner.define/1 do
+          field :name, String.t()
+          field :age, integer()
+        end
+      end
 
   ## Examples
 
@@ -111,22 +132,20 @@ defmodule TypedStructor do
           })
 
         @__ts_definition__ definition
-        @__ts_options__ definition.options
-      after
-        :ok
-      end
-
-      TypedStructor.__struct_ast__()
-      TypedStructor.__type_ast__()
-
-      # create a lexical scope
-      try do
-        TypedStructor.__call_plugins_after_definitions__()
       after
         # cleanup
         Module.delete_attribute(__MODULE__, :__ts_options__)
         Module.delete_attribute(__MODULE__, :__ts_struct_fields__)
         Module.delete_attribute(__MODULE__, :__ts_struct_parameters__)
+      end
+
+      TypedStructor.__define__(@__ts_definition__)
+
+      # create a lexical scope
+      try do
+        TypedStructor.__call_plugins_after_definitions__(@__ts_definition__)
+      after
+        # cleanup
         Module.delete_attribute(__MODULE__, :__ts_struct_plugins__)
         Module.delete_attribute(__MODULE__, :__ts_definition__)
       end
@@ -246,75 +265,16 @@ defmodule TypedStructor do
     end
   end
 
-  @doc false
-  defmacro __struct_ast__ do
-    ast =
-      quote do
-        {fields, enforce_keys} =
-          Enum.map_reduce(@__ts_definition__.fields, [], fn field, acc ->
-            name = Keyword.fetch!(field, :name)
-            default = Keyword.get(field, :default)
+  defmacro __define__(definition) do
+    quote bind_quoted: [definition: definition] do
+      case Keyword.get(definition.options, :definer, :defstruct) do
+        :defstruct ->
+          require TypedStructor.Definer.Defstruct
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          TypedStructor.Definer.Defstruct.define(definition)
 
-            if Keyword.get(field, :enforce, false) and not Keyword.has_key?(field, :default) do
-              {{name, default}, [name | acc]}
-            else
-              {{name, default}, acc}
-            end
-          end)
-
-        @enforce_keys Enum.reverse(enforce_keys)
-        defstruct fields
-      end
-
-    quote do
-      if Keyword.get(@__ts_options__, :define_struct, true) do
-        unquote(ast)
-      end
-    end
-  end
-
-  @doc false
-  defmacro __type_ast__ do
-    quote unquote: false do
-      fields =
-        Enum.reduce(@__ts_definition__.fields, [], fn field, acc ->
-          name = Keyword.fetch!(field, :name)
-          type = Keyword.fetch!(field, :type)
-
-          if Keyword.get(field, :enforce, false) or Keyword.has_key?(field, :default) do
-            [{name, type} | acc]
-          else
-            [{name, quote(do: unquote(type) | nil)} | acc]
-          end
-        end)
-
-      type_name = Keyword.get(@__ts_options__, :type_name, :t)
-
-      parameters =
-        Enum.map(
-          @__ts_definition__.parameters,
-          fn parameter ->
-            parameter
-            |> Keyword.fetch!(:name)
-            |> Macro.var(__MODULE__)
-          end
-        )
-
-      case Keyword.get(@__ts_options__, :type_kind, :type) do
-        :type ->
-          @type unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
-                  unquote_splicing(fields)
-                }
-
-        :opaque ->
-          @opaque unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
-                    unquote_splicing(fields)
-                  }
-
-        :typep ->
-          @typep unquote(type_name)(unquote_splicing(parameters)) :: %__MODULE__{
-                   unquote_splicing(fields)
-                 }
+        fun when is_function(fun) ->
+          then(definition, fun)
       end
     end
   end
@@ -352,7 +312,7 @@ defmodule TypedStructor do
   end
 
   @doc false
-  defmacro __call_plugins_after_definitions__ do
+  defmacro __call_plugins_after_definitions__(definition) do
     plugins = Module.get_attribute(__CALLER__.module, :__ts_struct_plugins__)
 
     for {plugin, opts} <- plugins do
@@ -360,7 +320,7 @@ defmodule TypedStructor do
         require unquote(plugin)
 
         unquote(plugin).after_definition(
-          @__ts_definition__,
+          unquote(definition),
           unquote(Macro.escape(opts))
         )
       end

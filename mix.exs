@@ -60,7 +60,8 @@ defmodule TypedStructor.MixProject do
           TypedStructor.GuideCase,
           TypedStructor.TestCase
         ]
-      ]
+      ],
+      aliases: aliases()
     ]
   end
 
@@ -83,4 +84,15 @@ defmodule TypedStructor.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp aliases do
+    [
+      check: [
+        "format",
+        "compile --warning-as-errors",
+        "credo --strict",
+        "dialyzer"
+      ]
+    ]
+  end
 end
