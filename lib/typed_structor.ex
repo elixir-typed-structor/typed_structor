@@ -25,11 +25,17 @@ defmodule TypedStructor do
     * `:type_name` - the name of the type to use for the struct. Defaults to `t`.
 
   ## Definer
-  There are one available definer for now, `:defstruct`, which defines a struct and a type for a given definition.
+  The available definers are:
+  - `:defstruct`, which defines a struct and a type for a given definition
+  - `:defexception`, which defines an exception and a type for a given definition
 
   ### `:defstruct` options
 
     * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+
+  ### `:defexception` options
+
+    * `:define_struct` - if `false`, the type will be defined, but the exception struct will not be defined. Defaults to `true`.
 
   ### custom definer
 
@@ -272,6 +278,11 @@ defmodule TypedStructor do
           require TypedStructor.Definer.Defstruct
           # credo:disable-for-next-line Credo.Check.Design.AliasUsage
           TypedStructor.Definer.Defstruct.define(definition)
+
+        :defexception ->
+          require TypedStructor.Definer.Defexception
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          TypedStructor.Definer.Defexception.define(definition)
 
         fun when is_function(fun) ->
           then(definition, fun)

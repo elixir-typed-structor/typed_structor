@@ -30,29 +30,33 @@ defmodule TypedStructor.Definer.Defstruct do
 
   @doc false
   defmacro __struct_ast__(definition) do
-    ast =
-      quote do
-        {fields, enforce_keys} =
-          Enum.map_reduce(unquote(definition).fields, [], fn field, acc ->
-            name = Keyword.fetch!(field, :name)
-            default = Keyword.get(field, :default)
+    alias TypedStructor.Definer.Defstruct
 
-            if Keyword.get(field, :enforce, false) and not Keyword.has_key?(field, :default) do
-              {{name, default}, [name | acc]}
-            else
-              {{name, default}, acc}
-            end
-          end)
+    quote bind_quoted: [definition: definition] do
+      if Keyword.get(definition.options, :define_struct, true) do
+        {fields, enforce_keys} =
+          Defstruct.__extract_fields_and_enforce_keys__(definition)
 
         @enforce_keys Enum.reverse(enforce_keys)
         defstruct fields
       end
-
-    quote do
-      if Keyword.get(unquote(definition).options, :define_struct, true) do
-        unquote(ast)
-      end
     end
+  end
+
+  @doc false
+  @spec __extract_fields_and_enforce_keys__(TypedStructor.Definition.t()) ::
+          {Keyword.t(), [atom()]}
+  def __extract_fields_and_enforce_keys__(definition) do
+    Enum.map_reduce(definition.fields, [], fn field, acc ->
+      name = Keyword.fetch!(field, :name)
+      default = Keyword.get(field, :default)
+
+      if Keyword.get(field, :enforce, false) and not Keyword.has_key?(field, :default) do
+        {{name, default}, [name | acc]}
+      else
+        {{name, default}, acc}
+      end
+    end)
   end
 
   @doc false

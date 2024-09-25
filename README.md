@@ -208,6 +208,26 @@ iex> User.Profile.changeset(%User.Profile{}, %{"email" => "my@email.com"})
   valid?: true
 >
 ```
+## Define an Exception
+
+In Elixir, an exception is defined as a struct that includes a special field named `__exception__`.
+To define an exception, use the `defexception` definer within the `typed_structor` block.
+
+```elixir
+defmodule HTTPException do
+  use TypedStructor
+
+  typed_structor definer: :defexception, enforce: true do
+    field :status, non_neg_integer()
+  end
+
+  @impl Exception
+  def message(%__MODULE__{status: status}) do
+    "HTTP status #{status}"
+  end
+end
+```
+
 ## Documentation
 
 To add a `@typedoc` to the struct type, just add the attribute in the typed_structor block:
