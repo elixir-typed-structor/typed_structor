@@ -13,7 +13,8 @@ defmodule TypedStructor.Definer.Utils do
       name = Keyword.fetch!(field, :name)
       default = Keyword.get(field, :default)
 
-      if Keyword.get(field, :enforce, false) and not Keyword.has_key?(field, :default) do
+      if get_keyword_value(field, :enforce, definition.options, false) and
+           not Keyword.has_key?(field, :default) do
         {{name, default}, [name | acc]}
       else
         {{name, default}, acc}
@@ -49,7 +50,8 @@ defmodule TypedStructor.Definer.Utils do
         name = Keyword.fetch!(field, :name)
         type = Keyword.fetch!(field, :type)
 
-        if Keyword.get(field, :enforce, false) or Keyword.has_key?(field, :default) do
+        if get_keyword_value(field, :enforce, definition.options, false) or
+             Keyword.has_key?(field, :default) do
           {name, type}
         else
           {name, quote(do: unquote(type) | nil)}
@@ -57,5 +59,14 @@ defmodule TypedStructor.Definer.Utils do
       end)
 
     {type_kind, type_name, parameters, fields}
+  end
+
+  @spec get_keyword_value(Keyword.t(val), atom(), Keyword.t(val), val) :: val
+        when val: Keyword.value()
+  defp get_keyword_value(kv, key, options, default)
+       when is_list(kv) and is_atom(key) and is_list(options) do
+    Keyword.get_lazy(kv, key, fn ->
+      Keyword.get(options, key, default)
+    end)
   end
 end

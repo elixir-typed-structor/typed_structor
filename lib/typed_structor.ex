@@ -107,15 +107,12 @@ defmodule TypedStructor do
   end
 
   defp __typed_structor__(mod, options, block) do
-    Module.register_attribute(mod, :__ts_options__, accumulate: false)
     Module.register_attribute(mod, :__ts_struct_fields__, accumulate: true)
     Module.register_attribute(mod, :__ts_struct_parameters__, accumulate: true)
     Module.register_attribute(mod, :__ts_struct_plugins__, accumulate: true)
     Module.register_attribute(mod, :__ts_definition____, accumulate: false)
 
     quote do
-      @__ts_options__ unquote(options)
-
       # create a lexical scope
       try do
         import TypedStructor,
@@ -132,7 +129,7 @@ defmodule TypedStructor do
       try do
         definition =
           TypedStructor.__call_plugins_before_definitions__(%TypedStructor.Definition{
-            options: @__ts_options__,
+            options: unquote(options),
             fields: Enum.reverse(@__ts_struct_fields__),
             parameters: Enum.reverse(@__ts_struct_parameters__)
           })
@@ -140,7 +137,6 @@ defmodule TypedStructor do
         @__ts_definition__ definition
       after
         # cleanup
-        Module.delete_attribute(__MODULE__, :__ts_options__)
         Module.delete_attribute(__MODULE__, :__ts_struct_fields__)
         Module.delete_attribute(__MODULE__, :__ts_struct_parameters__)
       end
@@ -219,7 +215,7 @@ defmodule TypedStructor do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
 
     quote do
-      @__ts_struct_fields__ Keyword.merge(@__ts_options__, unquote(options))
+      @__ts_struct_fields__ unquote(options)
     end
   end
 
