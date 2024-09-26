@@ -28,6 +28,8 @@ defmodule TypedStructor do
   The available definers are:
   - `:defstruct`, which defines a struct and a type for a given definition
   - `:defexception`, which defines an exception and a type for a given definition
+  - `:defrecord`, which defines record macros and a type for a given definition
+  - `:defrecordp`, which defines private record macros and a type for a given definition
 
   ### `:defstruct` options
 
@@ -36,6 +38,12 @@ defmodule TypedStructor do
   ### `:defexception` options
 
     * `:define_struct` - if `false`, the type will be defined, but the exception struct will not be defined. Defaults to `true`.
+
+  ### `:defrecord` and `:defrecordp` options
+
+    * `:record_name`(**required**) - the name of the record, it must be provided.
+    * `:record_tag` - if set, the record will be tagged with the given value. Defaults to `nil`.
+    * `:define_record` - if `false`, the type will be defined, but the record macros will not be defined. Defaults to `true`.
 
   ### custom definer
 
@@ -279,6 +287,16 @@ defmodule TypedStructor do
           require TypedStructor.Definer.Defexception
           # credo:disable-for-next-line Credo.Check.Design.AliasUsage
           TypedStructor.Definer.Defexception.define(definition)
+
+        :defrecord ->
+          require TypedStructor.Definer.Defrecord
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          TypedStructor.Definer.Defrecord.define(definition)
+
+        :defrecordp ->
+          require TypedStructor.Definer.Defrecordp
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          TypedStructor.Definer.Defrecordp.define(definition)
 
         fun when is_function(fun) ->
           then(definition, fun)

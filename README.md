@@ -228,6 +228,21 @@ defmodule HTTPException do
 end
 ```
 
+## Define records related macros
+
+In Elixir, you can use the Record module to define and work with Erlang records,
+making interoperability between Elixir and Erlang more seamless.
+
+```elixir
+defmodule TypedStructor.User do
+  use TypedStructor
+
+  typed_structor definer: :defrecord, record_name: :user, record_tag: User, enforce: true do
+    field :name, String.t()
+    field :age, pos_integer()
+  end
+end
+```
 ## Documentation
 
 To add a `@typedoc` to the struct type, just add the attribute in the typed_structor block:
