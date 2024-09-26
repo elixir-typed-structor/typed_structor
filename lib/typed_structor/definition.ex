@@ -10,5 +10,6 @@ defmodule TypedStructor.Definition do
           parameters: [Keyword.t()]
         }
 
+  @enforce_keys [:options, :fields, :parameters]
   defstruct [:options, :fields, :parameters]
 end

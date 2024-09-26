@@ -18,6 +18,7 @@ defmodule TypedStructor.Definer.Defexception do
   """
 
   alias TypedStructor.Definer.Defstruct
+  alias TypedStructor.Definer.Utils
 
   @doc """
   Defines an exception and a type for a given definition.
@@ -35,8 +36,7 @@ defmodule TypedStructor.Definer.Defexception do
   defmacro __exception_ast__(definition) do
     quote bind_quoted: [definition: definition] do
       if Keyword.get(definition.options, :define_struct, true) do
-        {fields, enforce_keys} =
-          Defstruct.__extract_fields_and_enforce_keys__(definition)
+        {fields, enforce_keys} = Utils.fields_and_enforce_keys(definition)
 
         @enforce_keys Enum.reverse(enforce_keys)
         defexception fields
