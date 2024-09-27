@@ -43,6 +43,9 @@ defmodule TypedStructor.MixProject do
           "guides/plugins/primary_key_and_timestamps.md",
           "guides/plugins/derive_jason.md",
           "guides/plugins/derive_enumerable.md"
+        ],
+        nest_modules_by_prefix: [
+          TypedStructor.Definer
         ]
       ],
       package: [

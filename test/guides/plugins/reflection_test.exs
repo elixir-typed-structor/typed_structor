@@ -22,7 +22,7 @@ defmodule Guides.Plugins.ReflectionTest do
     assert [enforce: true, name: :name, type: type] = User.__typed_structor__(:field, :name)
     assert "String.t()" === Macro.to_string(type)
 
-    assert [enforce: true, name: :age, type: type] =
+    assert [name: :age, type: type] =
              MyApp.User.__typed_structor__(:field, :age)
 
     assert "integer()" === Macro.to_string(type)

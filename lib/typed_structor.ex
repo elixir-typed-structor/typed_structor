@@ -5,6 +5,13 @@ defmodule TypedStructor do
              |> String.split("<!-- MODULEDOC -->", parts: 2)
              |> Enum.fetch!(1)
 
+  @built_in_definers [
+    defstruct: TypedStructor.Definer.Defstruct,
+    defexception: TypedStructor.Definer.Defexception,
+    defrecord: TypedStructor.Definer.Defrecord,
+    defrecordp: TypedStructor.Definer.Defrecordp
+  ]
+
   defmacro __using__(_opts) do
     quote do
       import TypedStructor, only: [typed_structor: 1, typed_structor: 2]
@@ -28,24 +35,28 @@ defmodule TypedStructor do
   The available definers are:
   - `:defstruct`, which defines a struct and a type for a given definition
   - `:defexception`, which defines an exception and a type for a given definition
+  - `:defrecord`, which defines record macros and a type for a given definition
+  - `:defrecordp`, which defines private record macros and a type for a given definition
 
   ### `:defstruct` options
 
-    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  #{TypedStructor.Definer.Defstruct.__additional_options__()}
 
   ### `:defexception` options
 
-    * `:define_struct` - if `false`, the type will be defined, but the exception struct will not be defined. Defaults to `true`.
+  #{TypedStructor.Definer.Defexception.__additional_options__()}
+
+  ### `:defrecord` and `:defrecordp` options
+
+  #{TypedStructor.Definer.Defrecord.__additional_options__()}
 
   ### custom definer
 
       defmodule MyStruct do
-        # you must require the definer module to use its define/1 macro
-        require MyDefiner
-
         use TypedStructor
 
-        typed_structor definer: &MyDefiner.define/1 do
+        typed_structor definer: MyDefiner do
+
           field :name, String.t()
           field :age, integer()
         end
@@ -91,7 +102,7 @@ defmodule TypedStructor do
   defmacro typed_structor(options \\ [], do: block) when is_list(options) do
     case Keyword.pop(options, :module) do
       {nil, options} ->
-        __typed_structor__(__CALLER__.module, options, block)
+        __typed_structor__(__CALLER__, options, block)
 
       {module, options} ->
         quote do
@@ -106,16 +117,18 @@ defmodule TypedStructor do
     end
   end
 
-  defp __typed_structor__(mod, options, block) do
-    Module.register_attribute(mod, :__ts_options__, accumulate: false)
-    Module.register_attribute(mod, :__ts_struct_fields__, accumulate: true)
-    Module.register_attribute(mod, :__ts_struct_parameters__, accumulate: true)
-    Module.register_attribute(mod, :__ts_struct_plugins__, accumulate: true)
-    Module.register_attribute(mod, :__ts_definition____, accumulate: false)
+  defp __typed_structor__(caller, options, block) when is_list(options) do
+    case fetch_definer!(caller, options) do
+      :error -> :ok
+      {:ok, definer} -> Module.put_attribute(caller.module, :__ts_definer__, definer)
+    end
+
+    Module.register_attribute(caller.module, :__ts_struct_fields__, accumulate: true)
+    Module.register_attribute(caller.module, :__ts_struct_parameters__, accumulate: true)
+    Module.register_attribute(caller.module, :__ts_struct_plugins__, accumulate: true)
+    Module.register_attribute(caller.module, :__ts_definition____, accumulate: false)
 
     quote do
-      @__ts_options__ unquote(options)
-
       # create a lexical scope
       try do
         import TypedStructor,
@@ -132,7 +145,7 @@ defmodule TypedStructor do
       try do
         definition =
           TypedStructor.__call_plugins_before_definitions__(%TypedStructor.Definition{
-            options: @__ts_options__,
+            options: unquote(options),
             fields: Enum.reverse(@__ts_struct_fields__),
             parameters: Enum.reverse(@__ts_struct_parameters__)
           })
@@ -140,7 +153,6 @@ defmodule TypedStructor do
         @__ts_definition__ definition
       after
         # cleanup
-        Module.delete_attribute(__MODULE__, :__ts_options__)
         Module.delete_attribute(__MODULE__, :__ts_struct_fields__)
         Module.delete_attribute(__MODULE__, :__ts_struct_parameters__)
       end
@@ -154,7 +166,27 @@ defmodule TypedStructor do
         # cleanup
         Module.delete_attribute(__MODULE__, :__ts_struct_plugins__)
         Module.delete_attribute(__MODULE__, :__ts_definition__)
+        Module.delete_attribute(__MODULE__, :__ts_definer__)
       end
+    end
+  end
+
+  defp fetch_definer!(caller, options) when is_list(options) do
+    case Keyword.fetch(options, :definer) do
+      :error ->
+        :error
+
+      {:ok, definer} ->
+        case Macro.expand(definer, caller) do
+          built_in_or_mod when is_atom(built_in_or_mod) ->
+            {:ok, built_in_or_mod}
+
+          other ->
+            raise ArgumentError, """
+            Definer must be one of :defstruct, :defexception, :defrecord, :defrecordp or a module that defines a `define/1` macro,
+            got: #{inspect(other)}
+            """
+        end
     end
   end
 
@@ -219,7 +251,7 @@ defmodule TypedStructor do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
 
     quote do
-      @__ts_struct_fields__ Keyword.merge(@__ts_options__, unquote(options))
+      @__ts_struct_fields__ unquote(options)
     end
   end
 
@@ -272,21 +304,30 @@ defmodule TypedStructor do
   end
 
   defmacro __define__(definition) do
-    quote bind_quoted: [definition: definition] do
-      case Keyword.get(definition.options, :definer, :defstruct) do
-        :defstruct ->
-          require TypedStructor.Definer.Defstruct
-          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
-          TypedStructor.Definer.Defstruct.define(definition)
+    definer = Module.get_attribute(__CALLER__.module, :__ts_definer__, :defstruct)
+    definer_mod = Keyword.get(@built_in_definers, definer, definer)
 
-        :defexception ->
-          require TypedStructor.Definer.Defexception
-          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
-          TypedStructor.Definer.Defexception.define(definition)
+    quote do
+      case Keyword.fetch(unquote(definition).options, :definer) do
+        :error ->
+          :ok
 
-        fun when is_function(fun) ->
-          then(definition, fun)
+        {:ok, unquote(definer)} ->
+          :ok
+
+        {:ok, other} ->
+          IO.warn("""
+          The definer option set in the `typed_structor` block is different from the definer option in the definition.
+          We will ignore the definer option in the definition and use the one set in the `typed_structor` block.
+
+          Note: The definer option in the definition may be changed by a plugin.
+
+          The effective definer is: #{inspect(unquote(definer))}, the ignored definer from the definition is: #{inspect(other)}.
+          """)
       end
+
+      require unquote(definer_mod)
+      unquote(definer_mod).define(unquote(definition))
     end
   end
 

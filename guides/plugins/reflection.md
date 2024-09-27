@@ -16,7 +16,11 @@ defmodule Guides.Plugins.Reflection do
 
       enforced_fields =
         definition.fields
-        |> Stream.filter(&Keyword.get(&1, :enforce, false))
+        |> Stream.filter(fn field ->
+          Keyword.get_lazy(field, :enforce, fn ->
+            Keyword.get(definition.options, :enforce, false)
+          end)
+        end)
         |> Stream.map(&Keyword.fetch!(&1, :name))
         |> Enum.to_list()
 
