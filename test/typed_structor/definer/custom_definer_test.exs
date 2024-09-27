@@ -47,27 +47,29 @@ defmodule TypedStructor.Definer.CustomDefinerTest do
     end
   end
 
-  test "warns when definer is overridden" do
-    {_result, [warning]} =
-      Code.with_diagnostics(fn ->
-        defmodule DefinerWarning do
-          use TypedStructor
+  if function_exported?(Code, :with_diagnostics, 1) do
+    test "warns when definer is overridden" do
+      {_result, [warning]} =
+        Code.with_diagnostics(fn ->
+          defmodule DefinerWarning do
+            use TypedStructor
 
-          typed_structor do
-            plugin Plugin
+            typed_structor do
+              plugin Plugin
 
-            field :name, String.t()
+              field :name, String.t()
+            end
           end
-        end
-      end)
+        end)
 
-    assert match?(
-             %{
-               message:
-                 "The definer option set in the `typed_structor` block is different from the definer option in the definition" <>
-                   _message
-             },
-             warning
-           )
+      assert match?(
+               %{
+                 message:
+                   "The definer option set in the `typed_structor` block is different from the definer option in the definition" <>
+                     _message
+               },
+               warning
+             )
+    end
   end
 end
