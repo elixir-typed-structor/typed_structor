@@ -1,10 +1,14 @@
 defmodule TypedStructor.Definer.Defexception do
+  additional_options = """
+  * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  """
+
   @moduledoc """
   A definer to define an exception and a type for a given definition.
 
   ## Additional options for `typed_structor`
 
-    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  #{additional_options}
 
   ## Usage
 
@@ -43,4 +47,7 @@ defmodule TypedStructor.Definer.Defexception do
       end
     end
   end
+
+  @doc false
+  def __additional_options__, do: unquote(additional_options)
 end

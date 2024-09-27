@@ -1,10 +1,14 @@
 defmodule TypedStructor.Definer.Defstruct do
+  additional_options = """
+  * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  """
+
   @moduledoc """
   A definer to define a struct and a type for a given definition.
 
   ## Additional options for `typed_structor`
 
-    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  #{additional_options}
 
   ## Usage
 
@@ -65,4 +69,7 @@ defmodule TypedStructor.Definer.Defstruct do
       end
     end
   end
+
+  @doc false
+  def __additional_options__, do: unquote(additional_options)
 end

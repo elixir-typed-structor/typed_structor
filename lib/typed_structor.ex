@@ -40,17 +40,15 @@ defmodule TypedStructor do
 
   ### `:defstruct` options
 
-    * `:define_struct` - if `false`, the type will be defined, but the struct will not be defined. Defaults to `true`.
+  #{TypedStructor.Definer.Defstruct.__additional_options__()}
 
   ### `:defexception` options
 
-    * `:define_struct` - if `false`, the type will be defined, but the exception struct will not be defined. Defaults to `true`.
+  #{TypedStructor.Definer.Defexception.__additional_options__()}
 
   ### `:defrecord` and `:defrecordp` options
 
-    * `:record_name`(**required**) - the name of the record, it must be provided.
-    * `:record_tag` - if set, the record will be tagged with the given value. Defaults to `nil`.
-    * `:define_record` - if `false`, the type will be defined, but the record macros will not be defined. Defaults to `true`.
+  #{TypedStructor.Definer.Defrecord.__additional_options__()}
 
   ### custom definer
 

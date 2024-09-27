@@ -1,12 +1,16 @@
 defmodule TypedStructor.Definer.Defrecord do
+  additional_options = """
+  * `:record_name`(**required**) - the name of the record, it must be provided.
+  * `:record_tag` - if set, the record will be tagged with the given value. Defaults to `nil`.
+  * `:define_record` - if `false`, the type will be defined, but the record will not be defined. Defaults to `true`.
+  """
+
   @moduledoc """
   A definer to define record macors and a type for a given definition.
 
   ## Additional options for `typed_structor`
 
-    * `:record_name`(**required**) - the name of the record, it must be provided.
-    * `:record_tag` - if set, the record will be tagged with the given value. Defaults to `nil`.
-    * `:define_record` - if `false`, the type will be defined, but the record will not be defined. Defaults to `true`.
+  #{additional_options}
 
   ## Usage
 
@@ -136,4 +140,7 @@ defmodule TypedStructor.Definer.Defrecord do
         """
     end
   end
+
+  @doc false
+  def __additional_options__, do: unquote(additional_options)
 end
