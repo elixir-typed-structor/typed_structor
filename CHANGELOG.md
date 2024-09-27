@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.4.2...v0.5.0) (2024-09-27)
+
+
+### Features
+
+* add `:defexception` denfiner to define an exception ([#19](https://github.com/elixir-typed-structor/typed_structor/issues/19)) ([800ca9e](https://github.com/elixir-typed-structor/typed_structor/commit/800ca9e1e0d145288ccab7469153b65fedb63c0a))
+* support `:defrecord` and `:defrecordp` and custom definer ([#21](https://github.com/elixir-typed-structor/typed_structor/issues/21)) ([cc93185](https://github.com/elixir-typed-structor/typed_structor/commit/cc9318589bd8444a1597b6283478dcafcc61f0e0))
+
 ## [0.4.2](https://github.com/elixir-typed-structor/typed_structor/compare/v0.4.1...v0.4.2) (2024-07-11)
 
 

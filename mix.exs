@@ -1,7 +1,7 @@
 defmodule TypedStructor.MixProject do
   use Mix.Project
 
-  @version "0.4.2"
+  @version "0.5.0"
   @source_url "https://github.com/elixir-typed-structor/typed_structor"
 
   def project do
