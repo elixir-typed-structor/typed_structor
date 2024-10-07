@@ -14,6 +14,7 @@ We provide some example plugins that you can use as a reference, or copy-paste.
 - [Registering plugins globally](./registering_plugins_globally.md)
 - [Implement `Access` behavior](./accessible.md)
 - [Implement reflection functions](./reflection.md)
+- [Add fields docs to the `@typedoc`](./doc_fields.md)
 - [Type Only on Ecto Schema](./type_only_on_ecto_schema.md)
 - [Add primary key and timestamps types to your Ecto schema](./primary_key_and_timestamps.md)
 - [Derives the `Jason.Encoder` for `struct`](./derive_jason.md)

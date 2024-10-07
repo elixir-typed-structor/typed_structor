@@ -34,7 +34,7 @@ defmodule TypedStructor.MixProject do
           "guides/migrate_from_typed_struct.md",
 
           # plugins
-          {"guides/plugins/introduction.md", [title: "Introduction"]},
+          {"guides/plugins/introduction.md", [title: "Introduction to the plugin system"]},
           "guides/plugins/registering_plugins_globally.md",
           "guides/plugins/accessible.md",
           "guides/plugins/reflection.md",
