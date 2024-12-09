@@ -15,23 +15,20 @@ defmodule Guides.Plugins.DocFieldsTest do
       end
 
     expected = """
-    This is a user struct.
+    @type t(age) :: %User{age: age | nil, name: String.t() | nil}
 
+    This is a user struct.
 
     ## Parameters
 
-    | Name | Description |
-    |------|-------------|
-    |`:age` | The age parameter.|
-
+    Name | Description
+    :age | The age parameter.
 
     ## Fields
 
-    | Name | Type | Description |
-    |------|------|-------------|
-    |`:name` | `String.t() | nil` | The name of the user.|
-    |`:age` | `age | nil` | The age of the user.|
-
+    Name  | Type             | Description
+    :name | String.t() | nil | The name of the user.
+    :age  | age | nil        | The age of the user.
     """
 
     assert expected === doc
