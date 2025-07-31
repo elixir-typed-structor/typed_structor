@@ -6,7 +6,7 @@ defmodule TypedStructor.Definer.Defrecord do
   """
 
   @moduledoc """
-  A definer to define record macors and a type for a given definition.
+  A definer to define record macros and a type for a given definition.
 
   ## Additional options for `typed_structor`
 
@@ -17,7 +17,7 @@ defmodule TypedStructor.Definer.Defrecord do
       defmodule MyRecord do
         use TypedStructor
 
-        typed_structor definer: :defrecord, record_name: :user, record_tag: User, define_recrod: true do
+        typed_structor definer: :defrecord, record_name: :user, record_tag: User, define_record: true do
           field :name, String.t(), enforce: true
           field :age, pos_integer(), enforce: true
         end

@@ -263,7 +263,7 @@ defmodule TypedStructor do
       # A type parameter named int
       parameter :int
 
-      fied :number, int # not int()
+      field :number, int # not int()
   """
   defmacro parameter(name, opts \\ [])
 

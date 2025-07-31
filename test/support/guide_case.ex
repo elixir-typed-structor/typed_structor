@@ -39,7 +39,7 @@ defmodule TypedStructor.GuideCase do
     |> Enum.with_index(1)
     |> extract_code(%{in_code_block?: false, codes: []})
     |> case do
-      %{codes: [implementation, usage | _resut]} ->
+      %{codes: [implementation, usage | _result]} ->
         """
         #{implementation |> Enum.reverse() |> Enum.join("\n")}
         #{usage |> Enum.reverse() |> Enum.join("\n")}
