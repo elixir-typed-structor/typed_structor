@@ -2,7 +2,7 @@ defmodule TypedStructor do
   @external_resource "README.md"
   @moduledoc "README.md"
              |> File.read!()
-             |> String.split("<!-- MODULEDOC -->", parts: 2)
+             |> String.split("<!-- MODULEDOC -->", parts: 3)
              |> Enum.fetch!(1)
 
   @built_in_definers [
@@ -243,16 +243,16 @@ defmodule TypedStructor do
 
   > ### How `:default`, `:enforce` and `:null` affect `type` and `@enforce_keys` {: .tip}
 
-  > | **`:default`** | **`:enforce`** | **`:null`** |  **`type`**        | **`@enforce_keys`** |
-  > | -------------- | -------------- | -------------- | ----------------- | ------------------- |
-  > | `set`          | `true`         | `true` |  `t()`             | `excluded`          |
-  > | `set`          | `true`         | `false` |  `t()`             | `excluded`          |
-  > | `set`          | `false`        | `true` |  `t()`             | `excluded`          |
-  > | `set`          | `false`        | `false` |  `t()`             | `excluded`          |
-  > | `unset`        | `true`         | `true` |  `t()`             | **`included`**      |
-  > | `unset`        | `true`         | `false` |  `t()`             | **`included`**      |
-  > | `unset`        | `false`        | `true` |  **`t() \\| nil`** | `excluded`          |
-  > | `unset`        | `false`        | `false` |  **`t()`** | `excluded`          |
+  > | **`:default`** | **`:enforce`** | **`:null`** | **`type`**        | **`@enforce_keys`** |
+  > | -------------- | -------------- | ----------- | ----------------- | ------------------- |
+  > | `set`          | `true`         | `true`      | `t()`             | `excluded`          |
+  > | `set`          | `true`         | `false`     | `t()`             | `excluded`          |
+  > | `set`          | `false`        | `true`      | `t()`             | `excluded`          |
+  > | `set`          | `false`        | `false`     | `t()`             | `excluded`          |
+  > | `unset`        | `true`         | `true`      | `t()`             | **`included`**      |
+  > | `unset`        | `true`         | `false`     | `t()`             | **`included`**      |
+  > | `unset`        | `false`        | `true`      | **`t() \\| nil`** | `excluded`          |
+  > | `unset`        | `false`        | `false`     | `t()`             | `excluded`          |
   """
   defmacro field(name, type, options \\ []) do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
