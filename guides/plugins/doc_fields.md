@@ -119,13 +119,22 @@ defmodule Guides.Plugins.DocFields do
         type = Keyword.fetch!(field, :type)
 
         enforce = Keyword.get(definition.options, :enforce, false)
+        null = Keyword.get(definition.options, :null, true)
 
         type =
-          if Keyword.get(field, :enforce, enforce) or Keyword.has_key?(field, :default) do
-            Macro.to_string(type)
-          else
-            # escape `|`
-            "#{Macro.to_string(type)} \\| nil"
+          cond do
+            # If field has default or is enforced, type stays as is
+            Keyword.has_key?(field, :default) or Keyword.get(field, :enforce, enforce) ->
+              Macro.to_string(type)
+
+            # If null option is true (default), add nil to type
+            Keyword.get(field, :null, null) ->
+              # escape `|`
+              "#{Macro.to_string(type)} \\| nil"
+
+            # If null is false, type stays as is
+            true ->
+              Macro.to_string(type)
           end
 
         doc = Keyword.get(field, :doc, "*not documented*")

@@ -57,7 +57,9 @@ defmodule User do
   end
 end
 ```
+
 This is equivalent to:
+
 ```elixir
 defmodule User do
   defstruct [:id, :name, :age]
@@ -70,7 +72,51 @@ defmodule User do
   }
 end
 ```
+
 Check `TypedStructor.typed_structor/2` and `TypedStructor.field/3` for more information.
+
+### The `null` option
+
+By default, fields without a default value and not enforced have their type set to `type | nil`. You can control this behavior with the `null` option:
+
+```elixir
+defmodule User do
+  use TypedStructor
+
+  typed_structor do
+    # This field will have type `integer()` (not nullable)
+    field :id, integer(), null: false
+
+    # This field will have type `String.t() | nil` (nullable, default behavior)
+    field :name, String.t(), null: true
+
+    # Fields with defaults are never nullable, regardless of `null` option
+    field :status, String.t(), default: "active", null: true  # type is `String.t()`
+
+    # Enforced fields are never nullable, regardless of `null` option
+    field :email, String.t(), enforce: true, null: true      # type is `String.t()`
+  end
+end
+```
+
+The `null` option is particularly useful when loading data from external sources like databases:
+
+```elixir
+defmodule DatabaseRecord do
+  use TypedStructor
+
+  typed_structor do
+    # These fields must exist in the struct but can be nil when loaded from DB
+    field :name, String.t()
+    field :description, String.t()
+
+    # These fields must exist and cannot be nil (e.g., primary keys, timestamps)
+    field :id, integer(), null: false
+    field :inserted_at, DateTime.t(), null: false
+    field :updated_at, DateTime.t(), null: false
+  end
+end
+```
 
 ### Options
 
@@ -88,7 +134,9 @@ defmodule User do
   end
 end
 ```
+
 This is equivalent to:
+
 ```elixir
 defmodule User do
   use TypedStructor
@@ -104,6 +152,7 @@ end
 ```
 
 Type parameters also can be defined:
+
 ```elixir
 defmodule User do
   use TypedStructor
@@ -118,7 +167,9 @@ defmodule User do
   end
 end
 ```
+
 becomes:
+
 ```elixir
 defmodule User do
   @type t(id, name) :: %__MODULE__{
@@ -136,6 +187,7 @@ the `module` option with `TypedStructor`. This allows you to
 encapsulate the struct definition within a specific submodule context.
 
 Consider this example:
+
 ```elixir
 defmodule User do
   use TypedStructor
@@ -148,9 +200,11 @@ defmodule User do
   end
 end
 ```
+
 When defining a struct in a submodule, the `typed_structor` block
 functions similarly to a `defmodule` block. Therefore,
 the previous example can be alternatively written as:
+
 ```elixir
 defmodule User do
   defmodule Profile do
@@ -168,6 +222,7 @@ end
 Furthermore, the `typed_structor` block allows you to
 define functions, derive protocols, and more, just
 as you would within a `defmodule` block. Here's a example:
+
 ```elixir
 defmodule User do
   use TypedStructor
@@ -193,7 +248,9 @@ defmodule User do
   end
 end
 ```
+
 Now, you can interact with these structures:
+
 ```elixir
 iex> User.Profile.__struct__()
 %User.Profile{__meta__: #Ecto.Schema.Metadata<:built, "users">, email: nil}
@@ -208,6 +265,7 @@ iex> User.Profile.changeset(%User.Profile{}, %{"email" => "my@email.com"})
   valid?: true
 >
 ```
+
 ## Define an Exception
 
 In Elixir, an exception is defined as a struct that includes a special field named `__exception__`.
@@ -243,6 +301,7 @@ defmodule TypedStructor.User do
   end
 end
 ```
+
 ## Documentation
 
 To add a `@typedoc` to the struct type, just add the attribute in the typed_structor block:
@@ -256,6 +315,7 @@ typed_structor do
   field :age, non_neg_integer()
 end
 ```
+
 You can also document submodules this way:
 
 ```elixir
@@ -275,6 +335,7 @@ end
 For details on creating a plugin, refer to the `TypedStructor.Plugin` module.
 
 Here is a example of `Guides.Plugins.Accessible` plugin to define `Access` behavior for the struct.
+
 ```elixir
 defmodule User do
   use TypedStructor
