@@ -219,25 +219,6 @@ end
 # Creates User.Profile with its own struct and type
 ```
 
-### Parameterized Types
-
-Create generic types with parameters:
-
-```elixir
-defmodule Container do
-  use TypedStructor
-
-  typed_structor do
-    parameter :value_type
-
-    field :id, pos_integer()
-    field :value, value_type  # Uses the parameter
-  end
-end
-
-# Generates: @type t(value_type) :: %__MODULE__{...}
-```
-
 ### Integration with Other Tools
 
 Skip struct generation to use with Ecto or other schema tools:
@@ -305,19 +286,6 @@ defmodule UserRecord do
 end
 ```
 
-### Custom Types
-
-Control type visibility and naming:
-
-```elixir
-typed_structor type_kind: :opaque, type_name: :user_data do
-  field :id, pos_integer()
-  field :secret, String.t()
-end
-
-# Generates: @opaque user_data() :: %__MODULE__{...}
-```
-
 ## Plugins
 
 Extend TypedStructor's behavior with plugins. They run during compilation to add functionality:
@@ -345,15 +313,19 @@ get_in(user, [:name])  # => "Phil"
 
 ## Documentation
 
-Add documentation to your types and modules inside the block:
+Add `@moduledoc` at the module level, and `@typedoc` inside the block:
 
 ```elixir
-typed_structor do
-  @typedoc "A user with authentication details"
+defmodule User do
   @moduledoc "User management structures"
+  use TypedStructor
 
-  field :id, pos_integer()
-  field :name, String.t()
+  typed_structor do
+    @typedoc "A user with authentication details"
+
+    field :id, pos_integer()
+    field :name, String.t()
+  end
 end
 ```
 

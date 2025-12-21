@@ -39,7 +39,7 @@ defmodule TypedStructor.NullOptionTest do
     end
 
     @tag :tmp_dir
-    test "struct creation respects null option behavior", ctx do
+    test "struct fields default to nil regardless of null option", ctx do
       with_tmpmodule TestStruct, ctx do
         use TypedStructor
 
