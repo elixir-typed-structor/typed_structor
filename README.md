@@ -95,7 +95,7 @@ end
 
 ### Providing Defaults
 
-Fields with defaults aren't nullable (no reason to be):
+Fields with defaults don't need to be nullable since they always have a value:
 
 ```elixir
 typed_structor do
@@ -128,12 +128,12 @@ end
 
 The interaction between `enforce`, `default`, and `null` follows this logic:
 
-| enforce | default | null    | Type includes nil? |
-|---------|---------|---------|-------------------|
-| false   | no      | true    | Yes (nullable)    |
-| false   | no      | false   | No                |
-| false   | yes     | -       | No                |
-| true    | -       | -       | No                |
+| `:default` | `:enforce` | `:null` | Type includes `nil`? |
+|------------|------------|---------|----------------------|
+| `unset`    | `false`    | `true`  | yes                  |
+| `unset`    | `false`    | `false` | no                   |
+| `set`      | -          | -       | no                   |
+| -          | `true`     | -       | no                   |
 
 This is particularly useful when modeling database records where some fields can be `nil`:
 
