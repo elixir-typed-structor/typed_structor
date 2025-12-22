@@ -49,16 +49,11 @@ defmodule TypedStructor.NullOptionTest do
           field :email, String.t(), enforce: true
         end
       after
-        # Struct can be created with nil for nullable fields
+        # Struct fields can be nil at runtime regardless of null option in the type spec
         struct = struct(TestStruct, email: "test@example.com")
         assert struct.id == nil
         assert struct.name == nil
         assert struct.email == "test@example.com"
-
-        # All fields exist in the struct
-        assert Map.has_key?(struct, :id)
-        assert Map.has_key?(struct, :name)
-        assert Map.has_key?(struct, :email)
       end
     end
   end
