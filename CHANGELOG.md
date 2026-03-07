@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.5.0...v0.6.0) (2026-03-07)
+
+
+### Features
+
+* add null option and rewrite README ([#23](https://github.com/elixir-typed-structor/typed_structor/issues/23)) ([f673f6e](https://github.com/elixir-typed-structor/typed_structor/commit/f673f6eae9302b5e2468b00b1afe53c917729286))
+
+
+### Bug Fixes
+
+* typos ([cf89ffd](https://github.com/elixir-typed-structor/typed_structor/commit/cf89ffd9ff05e2254e3f748f05a25e9ce5d52555))
+
 ## [0.5.0](https://github.com/elixir-typed-structor/typed_structor/compare/v0.4.2...v0.5.0) (2024-09-27)
 
 
