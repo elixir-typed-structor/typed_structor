@@ -49,7 +49,7 @@ Add `:typed_structor` to your dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:typed_structor, "~> 0.5"}
+    {:typed_structor, "~> 0.6"}
   ]
 end
 ```
