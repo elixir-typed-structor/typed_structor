@@ -50,11 +50,19 @@ defmodule TypedStructor.Definer.Utils do
         name = Keyword.fetch!(field, :name)
         type = Keyword.fetch!(field, :type)
 
-        if get_keyword_value(field, :enforce, definition.options, false) or
-             Keyword.has_key?(field, :default) do
-          {name, type}
-        else
-          {name, quote(do: unquote(type) | nil)}
+        has_default = Keyword.has_key?(field, :default)
+        enforce = get_keyword_value(field, :enforce, definition.options, false)
+        null = get_keyword_value(field, :null, definition.options, true)
+
+        cond do
+          has_default or enforce ->
+            {name, type}
+
+          null ->
+            {name, quote(do: unquote(type) | nil)}
+
+          true ->
+            {name, type}
         end
       end)
 

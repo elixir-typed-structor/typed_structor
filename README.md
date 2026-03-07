@@ -5,14 +5,46 @@
 [![Document](https://img.shields.io/badge/document-gray)](https://hexdocs.pm/typed_structor)
 [![Plugin guides](https://img.shields.io/badge/plugin_guides-indianred?label=%F0%9F%94%A5&labelColor=snow)](https://hexdocs.pm/typed_structor/introduction.html)
 
-<!-- MODULEDOC -->
+Define your structs and types in one place. TypedStructor generates `defstruct`, type specs, and `@enforce_keys` while keeping your code clean and explicit.
 
-`TypedStructor` is a library for defining structs with types effortlessly.
-(This library is a rewritten version of [TypedStruct](https://github.com/ejpcmac/typed_struct) because it is no longer actively maintained.)
+## Why TypedStructor?
+
+**Without TypedStructor**, you write everything twice:
+
+```elixir
+defmodule User do
+  @enforce_keys [:id]
+  defstruct [:id, :name, :age]
+
+  @type t() :: %__MODULE__{
+    id: pos_integer(),
+    name: String.t() | nil,
+    age: non_neg_integer() | nil
+  }
+end
+```
+
+**With TypedStructor**, you write it once:
+
+```elixir
+defmodule User do
+  use TypedStructor
+
+  typed_structor do
+    field :id, pos_integer(), enforce: true
+    field :name, String.t()
+    field :age, non_neg_integer()
+  end
+end
+```
+
+Same result, half the boilerplate. Your struct definition and type spec stay in sync automatically.
+
+<!-- MODULEDOC -->
 
 ## Installation
 
-Add `:typed_structor` to the list of dependencies in `mix.exs`:
+Add `:typed_structor` to your dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -22,159 +54,182 @@ def deps do
 end
 ```
 
-Add `:typed_structor` to your `.formatter.exs` file
+> #### Formatter Setup {: .tip}
+>
+> Add `:typed_structor` to your `.formatter.exs` for proper indentation:
+>
+> ```elixir
+> [
+>   import_deps: [..., :typed_structor],
+>   inputs: [...]
+> ]
+> ```
 
-```elixir
-[
-  # import the formatter rules from `:typed_structor`
-  import_deps: [..., :typed_structor],
-  inputs: [...]
-]
-```
+## Getting Started
 
-## Usage
-
-### General usage
-
-To define a struct with types, use `TypedStructor`,
-and then define fields under the `TypedStructor.typed_structor/2` macro,
-using the `TypedStructor.field/3` macro to define each field.
+Use `typed_structor` blocks to define fields with their types:
 
 ```elixir
 defmodule User do
-  # use TypedStructor to import the `typed_structor` macro
   use TypedStructor
 
   typed_structor do
-    # Define each field with the `field` macro.
-    field :id, pos_integer()
-
-    # set a default value
-    field :name, String.t(), default: "Unknown"
-
-    # enforce a field
-    field :age, non_neg_integer(), enforce: true
-  end
-end
-```
-This is equivalent to:
-```elixir
-defmodule User do
-  defstruct [:id, :name, :age]
-
-  @type t() :: %__MODULE__{
-    id: pos_integer() | nil,
-    # Note: The 'name' can not be nil, for it has a default value.
-    name: String.t(),
-    age: non_neg_integer()
-  }
-end
-```
-Check `TypedStructor.typed_structor/2` and `TypedStructor.field/3` for more information.
-
-### Options
-
-You can also generate an `opaque` type for the struct,
-even changing the type name:
-
-```elixir
-defmodule User do
-  use TypedStructor
-
-  typed_structor type_kind: :opaque, type_name: :profile do
     field :id, pos_integer()
     field :name, String.t()
-    field :age, non_neg_integer()
   end
 end
 ```
-This is equivalent to:
+
+This generates a struct and type where fields are nullable by default (`pos_integer() | nil`).
+
+### Enforcing Required Fields
+
+Make fields non-nullable by enforcing them:
+
 ```elixir
-defmodule User do
-  use TypedStructor
-
-  defstruct [:id, :name, :age]
-
-  @opaque profile() :: %__MODULE__{
-    id: pos_integer() | nil,
-    name: String.t() | nil,
-    age: non_neg_integer() | nil
-  }
+typed_structor do
+  field :id, pos_integer(), enforce: true  # Required, never nil
+  field :name, String.t()                  # Optional, can be nil
 end
 ```
 
-Type parameters also can be defined:
+### Providing Defaults
+
+Fields with defaults don't need to be nullable since they always have a value:
+
 ```elixir
-defmodule User do
+typed_structor do
+  field :id, pos_integer(), enforce: true
+  field :name, String.t(), default: "Unknown"  # String.t() (not nullable)
+  field :age, non_neg_integer()                # non_neg_integer() | nil
+end
+```
+
+### Controlling Nullability
+
+You can explicitly control whether fields accept `nil`:
+
+```elixir
+typed_structor do
+  field :id, integer(), null: false       # Never nil
+  field :name, String.t(), null: true     # Always nullable
+end
+```
+
+Or set defaults for all fields in a block:
+
+```elixir
+typed_structor null: false do
+  field :id, integer()                         # Not nullable by default
+  field :email, String.t()                     # Not nullable by default
+  field :phone, String.t(), null: true         # Override for this field
+end
+```
+
+The interaction between `enforce`, `default`, and `null` follows this logic:
+
+| `:default` | `:enforce` | `:null` | Type includes `nil`? |
+|------------|------------|---------|----------------------|
+| `unset`    | `false`    | `true`  | yes                  |
+| `unset`    | `false`    | `false` | no                   |
+| `set`      | -          | -       | no                   |
+| -          | `true`     | -       | no                   |
+
+This is particularly useful when modeling database records where some fields can be `nil`:
+
+```elixir
+defmodule DatabaseRecord do
   use TypedStructor
 
   typed_structor do
-    parameter :id
-    parameter :name
+    # These fields can be nil when loaded from DB
+    field :name, String.t()
+    field :description, String.t()
 
-    field :id, id
-    field :name, name
-    field :age, non_neg_integer()
+    # These fields cannot be nil (e.g., primary keys, timestamps)
+    field :id, integer(), null: false
+    field :inserted_at, DateTime.t(), null: false
+    field :updated_at, DateTime.t(), null: false
   end
 end
 ```
-becomes:
-```elixir
-defmodule User do
-  @type t(id, name) :: %__MODULE__{
-    id: id | nil,
-    name: name | nil,
-    age: non_neg_integer() | nil
-  }
 
-  defstruct [:id, :name, :age]
+## Options
+
+TypedStructor provides several options to customize your type definitions:
+
+### Opaque Types
+
+Use `type_kind: :opaque` to hide implementation details:
+
+```elixir
+typed_structor type_kind: :opaque do
+  field :id, pos_integer()
+  field :secret, String.t()
 end
+
+# Generates: @opaque t() :: %__MODULE__{...}
 ```
 
-If you prefer to define a struct in a submodule, you can use
-the `module` option with `TypedStructor`. This allows you to
-encapsulate the struct definition within a specific submodule context.
+### Custom Type Names
 
-Consider this example:
+Override the default `t()` type name with `type_name`:
+
+```elixir
+typed_structor type_name: :user_data do
+  field :id, pos_integer()
+  field :name, String.t()
+end
+
+# Generates: @type user_data() :: %__MODULE__{...}
+```
+
+### Type Parameters
+
+Create generic types with `parameter/1`:
+
+```elixir
+typed_structor do
+  parameter :value_type
+  parameter :error_type
+
+  field :value, value_type
+  field :error, error_type
+end
+
+# Generates: @type t(value_type, error_type) :: %__MODULE__{...}
+```
+
+## Common Patterns
+
+### Nested Structs
+
+Define structs in submodules:
+
 ```elixir
 defmodule User do
   use TypedStructor
 
-  # `%User.Profile{}` is generated
   typed_structor module: Profile do
-    field :id, pos_integer()
-    field :name, String.t()
-    field :age, non_neg_integer()
+    field :email, String.t(), enforce: true
+    field :bio, String.t()
   end
 end
-```
-When defining a struct in a submodule, the `typed_structor` block
-functions similarly to a `defmodule` block. Therefore,
-the previous example can be alternatively written as:
-```elixir
-defmodule User do
-  defmodule Profile do
-    use TypedStructor
 
-    typed_structor do
-      field :id, pos_integer()
-      field :name, String.t()
-      field :age, non_neg_integer()
-    end
-  end
-end
+# Creates User.Profile with its own struct and type
 ```
 
-Furthermore, the `typed_structor` block allows you to
-define functions, derive protocols, and more, just
-as you would within a `defmodule` block. Here's a example:
+### Integration with Other Tools
+
+Skip struct generation to use with Ecto or other schema tools:
+
 ```elixir
 defmodule User do
   use TypedStructor
 
   typed_structor module: Profile, define_struct: false do
     @derive {Jason.Encoder, only: [:email]}
-    field :email, String.t()
+    field :email, String.t(), enforce: true
 
     use Ecto.Schema
     @primary_key false
@@ -193,25 +248,12 @@ defmodule User do
   end
 end
 ```
-Now, you can interact with these structures:
-```elixir
-iex> User.Profile.__struct__()
-%User.Profile{__meta__: #Ecto.Schema.Metadata<:built, "users">, email: nil}
-iex> Jason.encode!(%User.Profile{})
-"{\"email\":null}"
-iex> User.Profile.changeset(%User.Profile{}, %{"email" => "my@email.com"})
-#Ecto.Changeset<
-  action: nil,
-  changes: %{email: "my@email.com"},
-  errors: [],
-  data: #User.Profile<>,
-  valid?: true
->
-```
-## Define an Exception
 
-In Elixir, an exception is defined as a struct that includes a special field named `__exception__`.
-To define an exception, use the `defexception` definer within the `typed_structor` block.
+## Advanced Features
+
+### Exceptions
+
+Define typed exceptions with automatic `__exception__` handling:
 
 ```elixir
 defmodule HTTPException do
@@ -219,81 +261,78 @@ defmodule HTTPException do
 
   typed_structor definer: :defexception, enforce: true do
     field :status, non_neg_integer()
+    field :message, String.t()
   end
 
   @impl Exception
-  def message(%__MODULE__{status: status}) do
-    "HTTP status #{status}"
+  def message(%__MODULE__{status: status, message: msg}) do
+    "HTTP #{status}: #{msg}"
   end
 end
 ```
 
-## Define records related macros
+### Records
 
-In Elixir, you can use the Record module to define and work with Erlang records,
-making interoperability between Elixir and Erlang more seamless.
+Create Erlang-compatible records for interoperability:
 
 ```elixir
-defmodule TypedStructor.User do
+defmodule UserRecord do
   use TypedStructor
 
-  typed_structor definer: :defrecord, record_name: :user, record_tag: User, enforce: true do
-    field :name, String.t()
-    field :age, pos_integer()
+  typed_structor definer: :defrecord, record_name: :user do
+    field :name, String.t(), enforce: true
+    field :age, pos_integer(), enforce: true
   end
-end
-```
-## Documentation
-
-To add a `@typedoc` to the struct type, just add the attribute in the typed_structor block:
-
-```elixir
-typed_structor do
-  @typedoc "A typed user"
-
-  field :id, pos_integer()
-  field :name, String.t()
-  field :age, non_neg_integer()
-end
-```
-You can also document submodules this way:
-
-```elixir
-typedstructor module: Profile do
-  @moduledoc "A user profile struct"
-  @typedoc "A typed user profile"
-
-  field :id, pos_integer()
-  field :name, String.t()
-  field :age, non_neg_integer()
 end
 ```
 
 ## Plugins
 
-`TypedStructor` offers a plugin system to enhance functionality.
-For details on creating a plugin, refer to the `TypedStructor.Plugin` module.
+Extend TypedStructor's behavior with plugins. They run during compilation to add functionality:
 
-Here is a example of `Guides.Plugins.Accessible` plugin to define `Access` behavior for the struct.
 ```elixir
 defmodule User do
   use TypedStructor
 
   typed_structor do
-    plugin Guides.Plugins.Accessible
+    plugin Guides.Plugins.Accessible  # Adds Access behavior
 
     field :id, pos_integer()
     field :name, String.t()
-    field :age, non_neg_integer()
   end
 end
 
-user = %User{id: 1, name: "Phil", age: 20}
-get_in(user, [:name]) # => "Phil"
+user = %User{id: 1, name: "Phil"}
+get_in(user, [:name])  # => "Phil"
 ```
 
-> #### Plugins guides {: .tip}
+> #### Plugin Guides {: .tip}
 >
-> Here are some [Plugin Guides](guides/plugins/introduction.md)
-> for creating your own plugins. Please check them out
-> and feel free to copy-paste the code.
+> Check out the [Plugin Guides](guides/plugins/introduction.md) to learn how to create your own plugins.
+> All examples include copy-paste-ready code.
+
+## Documentation
+
+Add `@moduledoc` at the module level, and `@typedoc` inside the block:
+
+```elixir
+defmodule User do
+  @moduledoc "User management structures"
+  use TypedStructor
+
+  typed_structor do
+    @typedoc "A user with authentication details"
+
+    field :id, pos_integer()
+    field :name, String.t()
+  end
+end
+```
+
+<!-- MODULEDOC -->
+
+## Learn More
+
+- **API Reference**: Check `TypedStructor.typed_structor/2` and `TypedStructor.field/3` for all options
+- **Plugin System**: See `TypedStructor.Plugin` for creating custom plugins
+- **Guides**: Visit [hexdocs.pm/typed_structor](https://hexdocs.pm/typed_structor) for detailed guides

@@ -2,7 +2,7 @@ defmodule TypedStructor do
   @external_resource "README.md"
   @moduledoc "README.md"
              |> File.read!()
-             |> String.split("<!-- MODULEDOC -->", parts: 2)
+             |> String.split("<!-- MODULEDOC -->", parts: 3)
              |> Enum.fetch!(1)
 
   @built_in_definers [
@@ -27,6 +27,7 @@ defmodule TypedStructor do
 
     * `:module` - if provided, a new submodule will be created with the struct.
     * `:enforce` - if `true`, the struct will enforce the keys, see `field/3` options for more information.
+    * `:null` - if `true` (default), fields without a default value and not enforced will have `nil` added to their type. If `false`, prevents `nil` from being added.
     * `:definer` - the definer module to use to define the struct, record or exception. Defaults to `:defstruct`. It also accepts a macro that receives the definition struct and returns the AST. See definer section below.
     * `:type_kind` - the kind of type to use for the struct. Defaults to `type`, can be `opaque` or `typep`.
     * `:type_name` - the name of the type to use for the struct. Defaults to `t`.
@@ -237,15 +238,18 @@ defmodule TypedStructor do
     * `:default` - sets the default value for the field
     * `:enforce` - if set to `true`, enforces the field, and makes its type
       non-nullable if `:default` is not set
+    * `:null` - when set to `true` (the default), allows `nil` to be added to the
+      field type when `:default` is not set and `:enforce` is not set; when set
+      to `false`, prevents `nil` from being added in that case
 
-  > ### How `:default` and `:enforce` affect `type` and `@enforce_keys` {: .tip}
-  >
-  > | **`:default`** | **`:enforce`** | **`type`**        | **`@enforce_keys`** |
-  > | -------------- | -------------- | ----------------- | ------------------- |
-  > | `set`          | `true`         | `t()`             | `excluded`          |
-  > | `set`          | `false`        | `t()`             | `excluded`          |
-  > | `unset`        | `true`         | `t()`             | **`included`**      |
-  > | `unset`        | `false`        | **`t() \\| nil`** | `excluded`          |
+  > ### How `:default`, `:enforce` and `:null` affect `type` and `@enforce_keys` {: .tip}
+
+  > | **`:default`** | **`:enforce`** | **`:null`** | **`type`**        | **`@enforce_keys`** |
+  > | -------------- | -------------- | ----------- | ----------------- | ------------------- |
+  > | `set`          | -              | -           | `t()`             | `excluded`          |
+  > | `unset`        | `true`         | -           | `t()`             | **`included`**      |
+  > | `unset`        | `false`        | `true`      | **`t() \\| nil`** | `excluded`          |
+  > | `unset`        | `false`        | `false`     | `t()`             | `excluded`          |
   """
   defmacro field(name, type, options \\ []) do
     options = Keyword.merge(options, name: name, type: Macro.escape(type))
